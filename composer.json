@@ -1,0 +1,29 @@
+{
+    "name": "mpietrucha/finder",
+    "description": "Symfony Finder wrapper",
+    "type": "liblary",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Mpietrucha\\Finder\\": "src/"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
+    },
+    "authors": [
+        {
+            "name": "Michał Pietrucha",
+            "email": "michal.pietrucha@off-site.pl"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": "^8.1",
+        "mpietrucha/support": "^1.0",
+        "symfony/finder": "^6.2"
+    },
+    "require-dev": {
+        "symfony/var-dumper": "^6.2"
+    }
+}
