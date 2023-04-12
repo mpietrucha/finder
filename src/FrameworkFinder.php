@@ -20,6 +20,6 @@ class FrameworkFinder extends InstancesFinder
 
     public function instances(?Closure $callback = null, array $arguments = []): Collection
     {
-        return parent::instances($arguments)->filter(fn (FrameworkFinderInterface $framework) => $framework->found());
+        return parent::instances($callback, $arguments)->filter(fn (FrameworkFinderInterface $framework) => $framework->found());
     }
 }
