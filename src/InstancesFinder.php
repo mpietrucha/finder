@@ -21,7 +21,7 @@ class InstancesFinder extends Finder implements InstancesFinderInterface
     {
         $namespaces = $this->find()->map(fn (SplFileInfo $file) => Reflector::file($file)->getName());
 
-        return value($callback, $namespaces);
+        return with($namespaces, $callback);
     }
 
     public function instances(?Closure $callback = null, array $arguments = []): Collection
