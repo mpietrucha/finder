@@ -7,6 +7,11 @@ use Mpietrucha\Finder\Factory\FrameworkFinderFactory;
 
 class Laravel extends FrameworkFinderFactory
 {
+    public function name(): string
+    {
+        return 'laravel';
+    }
+
     public function found(): bool
     {
         return function_exists('app_path');
