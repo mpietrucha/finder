@@ -12,8 +12,13 @@ class FrameworkFinder extends InstancesFinder
         parent::__construct(__DIR__.'/Framework');
     }
 
-    public function instances(): Collection
+    public function namespaces(): Collection
     {
-        return parent::instances()->filter(fn (FrameworkFinderInterface $framework) => $framework->found());
+        return parent::namespaces()->filter(fn (string $namespace) => class_implements_interface($namespace, FrameworkFinderInterface::class));
+    }
+
+    public function instances(array $arguments = []): Collection
+    {
+        return parent::instances($arguments)->filter(fn (FrameworkFinderInterface $framework) => $framework->found());
     }
 }

@@ -6,5 +6,7 @@ use Illuminate\Support\Collection;
 
 interface InstancesFinderInterface
 {
-  public function instances(): Collection;
+    public function namespaces(): Collection;
+
+    public function instances(array $arguments = []): Collection;
 }
