@@ -11,9 +11,9 @@ class InstancesFinder extends Finder implements InstancesFinderInterface
 {
     public function __construct(protected array|string $in)
     {
-        $this->name('*.php');
-
         parent::__construct($in);
+
+        $this->name('*.php');
     }
 
     public function instances(): Collection
