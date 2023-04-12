@@ -2,12 +2,20 @@
 
 namespace Mpietrucha\Finder\Framework;
 
-use Mpietrucha\Support\Vendor;
 use Mpietrucha\Support\Macro;
+use Mpietrucha\Support\Vendor;
+use Mpietrucha\Finder\ProgressiveFinder;
+use Symfony\Component\Finder\SplFileInfo;
 use Mpietrucha\Finder\Factory\FrameworkFinderFactory;
 
 class Laravel extends FrameworkFinderFactory
 {
+    protected ?SplFileInfo $bootstrap = null;
+
+    protected const ROOT = '/var/www/html';
+
+    protected const BOOTSTRAP = 'bootstrap/app.php';
+
     public function name(): string
     {
         return 'laravel';
@@ -15,17 +23,17 @@ class Laravel extends FrameworkFinderFactory
 
     public function found(): bool
     {
-        return function_exists('app_path');
+        return $this->lookup()->count();
     }
 
     public function path(): ?string
     {
-        return app_path();
+        return $this->lookup()->first()?->getPath();
     }
 
     public function vendor(): ?Vendor
     {
-        if (! $this->found()) {
+        if (! $this->path()) {
             return null;
         }
 
@@ -37,16 +45,21 @@ class Laravel extends FrameworkFinderFactory
         Macro::bootstrap();
 
         $bootstrap = collect([
-            $this->vendor()->path(),
-            'bootstrap/app.php'
+            $this->path(),
+            self::BOOTSTRAPs
         ])->toDirectory();
 
         if (! file_exists($bootstrap)) {
             return;
         }
 
-        $app = require_once $this->vendor()->path();
+        $app = require_once $bootstrap;
 
         $app->boot();
+    }
+
+    protected function lookup(): Collection
+    {
+        return $this->bootstrap ??= ProgressiveFinder::create(self::ROOT)->name('artisan')->find();
     }
 }
