@@ -16,13 +16,15 @@ class InstancesFinder extends Finder implements InstancesFinderInterface
         $this->name('*.php');
     }
 
-    public function namespaces(): Collection
+    public function namespaces(?Closure $callback = null): Collection
     {
-        return $this->find()->map(fn (SplFileInfo $file) => Reflector::file($file)->getName());
+        $namespaces = $this->find()->map(fn (SplFileInfo $file) => Reflector::file($file)->getName());
+
+        return value($callback, $namespaces);
     }
 
-    public function instances(array $arguments = []): Collection
+    public function instances(?Closure $callback = null, array $arguments = []): Collection
     {
-        return $this->namespaces()->map(fn (string $namespace) => new $namespace(...$arguments));
+        return $this->namespaces($callback)->map(fn (string $namespace) => new $namespace(...$arguments));
     }
 }
