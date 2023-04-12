@@ -7,7 +7,7 @@ use Mpietrucha\Support\Reflector;
 use Symfony\Component\Finder\SplFileInfo;
 use Mpietrucha\Finder\Contracts\InstancesFinderInterface;
 
-class PhpClassFinder extends Finder implements InstancesFinderInterface
+class InstancesFinder extends Finder implements InstancesFinderInterface
 {
     public function __construct(protected array|string $in)
     {

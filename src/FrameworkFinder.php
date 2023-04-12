@@ -5,7 +5,7 @@ namespace Mpietrucha\Finder;
 use Illuminate\Support\Collection;
 use Mpietrucha\Finder\Contracts\FrameworkFinderInterface;
 
-class FrameworkFinder extends PhpClassFinder
+class FrameworkFinder extends InstancesFinder
 {
     public function __construct()
     {
