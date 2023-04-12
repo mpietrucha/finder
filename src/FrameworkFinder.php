@@ -2,6 +2,7 @@
 
 namespace Mpietrucha\Finder;
 
+use Closure;
 use Illuminate\Support\Collection;
 use Mpietrucha\Finder\Contracts\FrameworkFinderInterface;
 
