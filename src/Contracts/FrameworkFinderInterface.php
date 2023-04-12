@@ -13,4 +13,6 @@ interface FrameworkFinderInterface
     public function path(): ?string;
 
     public function vendor(): ?Vendor;
+
+    public function boot(): void;
 }

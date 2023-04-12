@@ -3,6 +3,7 @@
 namespace Mpietrucha\Finder\Framework;
 
 use Mpietrucha\Support\Vendor;
+use Mpietrucha\Support\Macro;
 use Mpietrucha\Finder\Factory\FrameworkFinderFactory;
 
 class Laravel extends FrameworkFinderFactory
@@ -29,5 +30,23 @@ class Laravel extends FrameworkFinderFactory
         }
 
         return Vendor::create($this->path());
+    }
+
+    public function boot(): void
+    {
+        Macro::bootstrap();
+
+        $bootstrap = collect([
+            $this->vendor()->path(),
+            'bootstrap/app.php'
+        ])->toDirectory();
+
+        if (! file_exists($bootstrap)) {
+            return;
+        }
+
+        $app = require_once $this->vendor()->path();
+
+        $app->boot();
     }
 }
