@@ -46,10 +46,7 @@ class Laravel extends FrameworkFinderFactory
     {
         Macro::bootstrap();
 
-        $bootstrap = collect([
-            $this->path(),
-            self::BOOTSTRAP
-        ])->toDirectory();
+        $bootstrap = collect([$this->path(), self::BOOTSTRAP])->toDirectory();
 
         if (! file_exists($bootstrap)) {
             return;
