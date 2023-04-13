@@ -5,12 +5,12 @@ namespace Mpietrucha\Finder\Framework;
 use Mpietrucha\Support\Macro;
 use Mpietrucha\Support\Vendor;
 use Mpietrucha\Finder\ProgressiveFinder;
-use Symfony\Component\Finder\SplFileInfo;
+use Illuminate\Support\Collection;
 use Mpietrucha\Finder\Factory\FrameworkFinderFactory;
 
 class Laravel extends FrameworkFinderFactory
 {
-    protected ?SplFileInfo $bootstrap = null;
+    protected ?Collection $bootstrap = null;
 
     protected const FILE = 'artisan';
 
