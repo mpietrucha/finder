@@ -12,6 +12,8 @@ class Laravel extends FrameworkFinderFactory
 {
     protected ?SplFileInfo $bootstrap = null;
 
+    protected const FILE = 'artisan';
+
     protected const ROOT = '/var/www/html';
 
     protected const BOOTSTRAP = 'bootstrap/app.php';
@@ -46,7 +48,7 @@ class Laravel extends FrameworkFinderFactory
 
         $bootstrap = collect([
             $this->path(),
-            self::BOOTSTRAPs
+            self::BOOTSTRAP
         ])->toDirectory();
 
         if (! file_exists($bootstrap)) {
@@ -60,6 +62,6 @@ class Laravel extends FrameworkFinderFactory
 
     protected function lookup(): Collection
     {
-        return $this->bootstrap ??= ProgressiveFinder::create(self::ROOT)->name('artisan')->find();
+        return $this->bootstrap ??= ProgressiveFinder::create(self::ROOT)->name(self::FILE)->find();
     }
 }
