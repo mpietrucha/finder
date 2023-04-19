@@ -10,11 +10,11 @@ use Mpietrucha\Finder\Factory\FrameworkFinderFactory;
 
 class Laravel extends FrameworkFinderFactory
 {
-    protected ?Collection $bootstrap = null;
+    protected ?Collection $paths = null;
 
     protected const FILE = 'artisan';
 
-    protected const ROOT = '/var/www/html';
+    protected const IN = '/var/www/html';
 
     protected const BOOTSTRAP = 'bootstrap/app.php';
 
@@ -23,30 +23,16 @@ class Laravel extends FrameworkFinderFactory
         return 'laravel';
     }
 
-    public function found(): bool
+    public function paths(?string $in = null): Collection
     {
-        return $this->lookup()->count();
+        return $this->paths ??= ProgressiveFinder::create($in ?? self::IN)->files()->name(self::FILE)->find();
     }
 
-    public function path(): ?string
-    {
-        return $this->lookup()->first()?->getPath();
-    }
-
-    public function vendor(): ?Vendor
-    {
-        if (! $this->path()) {
-            return null;
-        }
-
-        return Vendor::create($this->path());
-    }
-
-    public function boot(): void
+    public function boot(string $path): void
     {
         Macro::bootstrap();
 
-        $bootstrap = collect([$this->path(), self::BOOTSTRAP])->toDirectory();
+        $bootstrap = collect([$path, self::BOOTSTRAP])->toDirectory();
 
         if (! file_exists($bootstrap)) {
             return;
@@ -55,10 +41,5 @@ class Laravel extends FrameworkFinderFactory
         $app = require_once $bootstrap;
 
         $app->boot();
-    }
-
-    protected function lookup(): Collection
-    {
-        return $this->bootstrap ??= ProgressiveFinder::create(self::ROOT)->name(self::FILE)->find();
     }
 }

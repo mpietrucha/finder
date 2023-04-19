@@ -3,7 +3,7 @@
 namespace Mpietrucha\Finder;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\Traits\ForwardsCalls;
+use Mpietrucha\Support\Concerns\ForwardsCalls;
 use Symfony\Component\Finder\Finder as SymfonyFinder;
 use Mpietrucha\Support\Concerns\HasFactory;
 
@@ -18,14 +18,9 @@ class Finder
 
     public function __construct(protected string|array $in, protected Collection $history = new Collection)
     {
-        $this->finder = SymfonyFinder::create()->in($in);
-    }
-
-    public function __call(string $method, array $arguments): self
-    {
-        $this->forwardCallTo($this->finder, $method, $arguments);
-
-        return $this->history($method, $arguments);
+        $this->forwardTo(
+            $this->finder = SymfonyFinder::create()->in($in)
+        )->forwardsThenReturn(fn (string $method, array $arguments) => $this->history($method, $arguments));
     }
 
     public function track(bool $mode = true): self

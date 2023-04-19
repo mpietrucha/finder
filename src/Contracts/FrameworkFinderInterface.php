@@ -2,17 +2,11 @@
 
 namespace Mpietrucha\Finder\Contracts;
 
-use Mpietrucha\Support\Vendor;
-
 interface FrameworkFinderInterface
 {
     public function name(): string;
 
-    public function found(): bool;
+    public function paths(?string $in = null)): Collection;
 
-    public function path(): ?string;
-
-    public function vendor(): ?Vendor;
-
-    public function boot(): void;
+    public function boot(string $path): void;
 }

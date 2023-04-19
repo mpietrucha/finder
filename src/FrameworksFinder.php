@@ -6,11 +6,20 @@ use Closure;
 use Illuminate\Support\Collection;
 use Mpietrucha\Finder\Contracts\FrameworkFinderInterface;
 
-class FrameworkFinder extends InstancesFinder
+class FrameworksFinder extends InstancesFinder
 {
+    protected ?string $start = null;
+
     public function __construct()
     {
         parent::__construct(__DIR__.'/Framework');
+    }
+
+    public function in(string $start): self
+    {
+        $this->start = $start;
+
+        return $this;
     }
 
     public function namespaces(?Closure $callback = null): Collection
@@ -20,6 +29,6 @@ class FrameworkFinder extends InstancesFinder
 
     public function instances(?Closure $callback = null, array $arguments = []): Collection
     {
-        return parent::instances($callback, $arguments)->filter(fn (FrameworkFinderInterface $framework) => $framework->found());
+        return parent::instances($callback, $arguments)->filter(fn (FrameworkFinderInterface $framework) => $framework->paths($this->start)->count());
     }
 }
