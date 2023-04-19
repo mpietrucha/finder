@@ -58,7 +58,7 @@ class Finder
 
     protected function withHistory(self $instance): self
     {
-        $this->history->each(function (Collection $arguments, string $method) {
+        $this->history->each(function (Collection $arguments, string $method) use ($instance) {
             $arguments->each(fn (array $arguments) => $instance->$method(...$arguments));
         });
 
