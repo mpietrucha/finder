@@ -2,28 +2,39 @@
 
 namespace Mpietrucha\Finder;
 
-use Illuminate\Support\Collection;
-use Mpietrucha\Support\Concerns\ForwardsCalls;
-use Symfony\Component\Finder\Finder as SymfonyFinder;
-use Mpietrucha\Support\Concerns\HasFactory;
 use Mpietrucha\Support\Macro;
+use Illuminate\Support\Collection;
+use Mpietrucha\Support\Concerns\HasFactory;
+use Symfony\Component\Finder\Finder as Base;
+use Mpietrucha\Support\Concerns\ForwardsCalls;
 
 class Finder
 {
     use HasFactory;
     use ForwardsCalls;
 
-    protected SymfonyFinder $finder;
+    protected Base $finder;
 
     protected bool $track = false;
 
     public function __construct(protected string|array $in, protected Collection $history = new Collection)
     {
         $this->forwardTo(
-            $this->finder = SymfonyFinder::create()->in($in)
+            $this->finder = Base::create()->in($in)
         )->forwardsThenReturn(fn (string $method, array $arguments) => $this->history($method, $arguments));
 
         Macro::bootstrap();
+
+        $this->configure();
+    }
+
+    public function configure(): void
+    {
+    }
+
+    public function flat(): self
+    {
+        return $this->depth('== 0');
     }
 
     public function track(bool $mode = true): self
@@ -47,7 +58,7 @@ class Finder
 
     protected function withHistory(self $instance): self
     {
-        $this->history->each(function (Collection $arguments, string $method) use ($instance) {
+        $this->history->each(function (Collection $arguments, string $method) {
             $arguments->each(fn (array $arguments) => $instance->$method(...$arguments));
         });
 

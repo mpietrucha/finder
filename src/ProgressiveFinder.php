@@ -2,25 +2,21 @@
 
 namespace Mpietrucha\Finder;
 
-use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Stringable;
-use Mpietrucha\Support\Types;
 
 class ProgressiveFinder extends Finder
 {
-    protected string $root = DIRECTORY_SEPARATOR;
+    protected string $stop = DIRECTORY_SEPARATOR;
 
-    public function __construct(protected array|string $in)
+    public function configure(): void
     {
         $this->track();
-
-        parent::__construct($in);
     }
 
-    public function root(string $root): self
+    public function stop(string $stop): self
     {
-        $this->root = $root;
+        $this->stop = $stop;
 
         return $this;
     }
@@ -32,9 +28,11 @@ class ProgressiveFinder extends Finder
 
     protected function nextTick(): Collection
     {
-        return collect($this->in)->filter(fn (string $in) => $in !== $this->root)
+        return collect($this->in)->filter(fn (string $in) => $in !== $this->stop)
             ->toStringable()
-            ->map->beforeLast(DIRECTORY_SEPARATOR)
+            ->map(function (Stringable $path) {
+                return $path->toDirectoryCollection()->withoutLast()->toDirectory();
+            })
             ->whenNotEmpty(function (Collection $in) {
                 $instance = self::create($in->toArray());
 

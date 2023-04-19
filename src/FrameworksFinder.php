@@ -2,7 +2,6 @@
 
 namespace Mpietrucha\Finder;
 
-use Closure;
 use Illuminate\Support\Collection;
 use Mpietrucha\Finder\Contracts\FrameworkFinderInterface;
 
@@ -15,6 +14,15 @@ class FrameworksFinder extends InstancesFinder
         parent::__construct(__DIR__.'/Framework');
     }
 
+    public function configure(): void
+    {
+        parent::configure();
+
+        $this->flat()->namespace(function (string $namespace) {
+            return class_implements_interface($namespace, FrameworkFinderInterface::class);
+        });
+    }
+
     public function in(string $start): self
     {
         $this->start = $start;
@@ -22,13 +30,8 @@ class FrameworksFinder extends InstancesFinder
         return $this;
     }
 
-    public function namespaces(?Closure $callback = null): Collection
+    public function instances(): Collection
     {
-        return parent::namespaces($callback)->filter(fn (string $namespace) => class_implements_interface($namespace, FrameworkFinderInterface::class));
-    }
-
-    public function instances(?Closure $callback = null, array $arguments = []): Collection
-    {
-        return parent::instances($callback, $arguments)->filter(fn (FrameworkFinderInterface $framework) => $framework->paths($this->start)->count());
+        return parent::namespaces()->map(fn (string $namespace) => $namespace::find($this->start))->collapse();
     }
 }

@@ -3,40 +3,46 @@
 namespace Mpietrucha\Finder\Framework;
 
 use Mpietrucha\Support\Macro;
-use Mpietrucha\Support\Vendor;
-use Mpietrucha\Finder\ProgressiveFinder;
 use Illuminate\Support\Collection;
+use Mpietrucha\Finder\ProgressiveFinder;
 use Mpietrucha\Finder\Factory\FrameworkFinderFactory;
 
 class Laravel extends FrameworkFinderFactory
 {
-    protected ?Collection $paths = null;
+    protected const SEARCH_FILE_NAME = 'artisan';
 
-    protected const FILE = 'artisan';
+    protected const DEFAULT_IN = '/ver/www/html';
 
-    protected const IN = '/var/www/html';
+    protected const BOOTSTRAP_FILE = 'bootstrap/app.php';
 
-    protected const BOOTSTRAP = 'bootstrap/app.php';
+    public static function find(?string $in): Collection
+    {
+        return ProgressiveFinder::create($in ?? self::DEFAULT_IN)
+            ->files()
+            ->name(self::SEARCH_FILE_NAME)
+            ->find()
+            ->map->getPath()
+            ->map(self::create(...));
+    }
 
     public function name(): string
     {
         return 'laravel';
     }
 
-    public function paths(?string $in = null): Collection
-    {
-        return $this->paths ??= ProgressiveFinder::create($in ?? self::IN)->files()->name(self::FILE)->find();
-    }
-
-    public function boot(string $path): void
+    public function boot(): void
     {
         Macro::bootstrap();
 
-        $bootstrap = collect([$path, self::BOOTSTRAP])->toDirectory();
+        $autoload = $this->vendor()->autoload();
 
-        if (! file_exists($bootstrap)) {
+        $bootstrap = collect([$this->path, self::BOOTSTRAP_FILE])->toDirectory();
+
+        if (! file_exists($bootstrap) || ! file_exists($autoload)) {
             return;
         }
+
+        require_once $autoload;
 
         $app = require_once $bootstrap;
 

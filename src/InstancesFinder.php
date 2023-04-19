@@ -3,29 +3,44 @@
 namespace Mpietrucha\Finder;
 
 use Closure;
-use Illuminate\Support\Collection;
 use Mpietrucha\Support\Reflector;
+use Illuminate\Support\Collection;
 use Symfony\Component\Finder\SplFileInfo;
-use Mpietrucha\Finder\Contracts\InstancesFinderInterface;
 
-class InstancesFinder extends Finder implements InstancesFinderInterface
+class InstancesFinder extends Finder
 {
-    public function __construct(protected array|string $in)
-    {
-        parent::__construct($in);
+    protected array $arguments = [];
 
-        $this->name('*.php');
+    protected ?Closure $namespace = null;
+
+    public function configure(): void
+    {
+        $this->files()->name('*.php');
     }
 
-    public function namespaces(?Closure $callback = null): Collection
+    public function namespace(Closure $callback): self
+    {
+        $this->namespace = $callback;
+
+        return $this;
+    }
+
+    public function arguments(array $arguments): self
+    {
+        $this->arguments = $arguments;
+
+        return $this;
+    }
+
+    public function namespaces(): Collection
     {
         $namespaces = $this->find()->map(fn (SplFileInfo $file) => Reflector::file($file)->getName());
 
-        return with($namespaces, $callback);
+        return $namespaces->filter($this->namespace);
     }
 
-    public function instances(?Closure $callback = null, array $arguments = []): Collection
+    public function instances(): Collection
     {
-        return $this->namespaces($callback)->map(fn (string $namespace) => new $namespace(...$arguments));
+        return $this->namespaces()->map(fn (string $namespace) => new $namespace(...$this->arguments));
     }
 }
