@@ -6,7 +6,6 @@ use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Stringable;
 use Mpietrucha\Support\Types;
-use Mpietrucha\Support\Macro;
 
 class ProgressiveFinder extends Finder
 {
@@ -15,8 +14,6 @@ class ProgressiveFinder extends Finder
     public function __construct(protected array|string $in)
     {
         $this->track();
-
-        Macro::bootstrap();
 
         parent::__construct($in);
     }
@@ -30,22 +27,18 @@ class ProgressiveFinder extends Finder
 
     public function find(): Collection
     {
-        $results = parent::find();
+        return parent::find()->whenEmpty($this->nextTick(...));
+    }
 
-        if ($results->count()) {
-            return $results;
-        }
+    protected function nextTick(): Collection
+    {
+        return collect($this->in)->filter(fn (string $in) => $in !== $this->root)
+            ->toStringable()
+            ->map->beforeLast(DIRECTORY_SEPARATOR)
+            ->whenNotEmpty(function (Collection $in) {
+                $instance = self::create($in->toArray());
 
-        $in = collect($this->in)->filter(fn (string $in) => $in !== $this->root);
-
-        if (! $in->count()) {
-            return collect();
-        }
-
-        $instance = self::create(
-            $in->toStringable()->map->beforeLast(DIRECTORY_SEPARATOR)->toArray()
-        );
-
-        return $this->withHistory($instance)->find();
+                return $this->withHistory($instance)->find();
+            });
     }
 }
