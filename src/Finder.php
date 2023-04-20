@@ -21,7 +21,7 @@ class Finder
 
     public function __construct(protected string|array $input, protected Collection $history = new Collection)
     {
-        $this->input = Argument::arguments($input)->filter()->onEvery(fn (Argument $argument) => $argument->string())->call();
+        $this->input = Argument::arguments($input)->filter->value()->always(fn (Argument $argument) => $argument->string())->call();
 
         $this->forwardTo(
             $this->finder = Rescue::create(fn () => Base::create()->ignoreUnreadableDirs()->in($this->input))->call()
@@ -50,7 +50,7 @@ class Finder
 
     public function find(): Collection
     {
-        return collect($this->finder);
+        return Rescue::create(fn () => collect($this->finder))->call(collect());
     }
 
     protected function history(string $method, array $arguments): self
