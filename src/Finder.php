@@ -3,6 +3,7 @@
 namespace Mpietrucha\Finder;
 
 use Mpietrucha\Support\Macro;
+use Mpietrucha\Support\Rescue;
 use Illuminate\Support\Collection;
 use Mpietrucha\Support\Concerns\HasFactory;
 use Symfony\Component\Finder\Finder as Base;
@@ -20,7 +21,7 @@ class Finder
     public function __construct(protected string|array $in, protected Collection $history = new Collection)
     {
         $this->forwardTo(
-            $this->finder = Base::create()->in($in)
+            $this->finder = Rescue::create(fn () => Base::create()->in($in))->fallback()->call()
         )->forwardsThenReturn(fn (string $method, array $arguments) => $this->history($method, $arguments));
 
         Macro::bootstrap();
