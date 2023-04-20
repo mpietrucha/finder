@@ -20,8 +20,8 @@ class Finder
 
     public function __construct(protected string|array $in, protected Collection $history = new Collection)
     {
-        $this->forwardTo(
-            $this->finder = Rescue::create(fn () => Base::create()->in($in))->fallback()->call()
+        $this->forwardFallback()->forwardTo(
+            $this->finder = Rescue::create(fn () => Base::create()->in($in))->call()
         )->forwardsThenReturn(fn (string $method, array $arguments) => $this->history($method, $arguments));
 
         Macro::bootstrap();
