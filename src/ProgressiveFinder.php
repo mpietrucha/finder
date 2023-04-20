@@ -7,6 +7,8 @@ use Illuminate\Support\Stringable;
 
 class ProgressiveFinder extends Finder
 {
+    protected bool $stopOnFailure = false;
+
     protected string $stop = DIRECTORY_SEPARATOR;
 
     public function configure(): void
@@ -21,6 +23,13 @@ class ProgressiveFinder extends Finder
         return $this;
     }
 
+    public function stopOnFailure(): self
+    {
+        $this->stopOnFailure = true;
+
+        return $this;
+    }
+
     public function find(): Collection
     {
         return parent::find()->whenEmpty($this->nextTick(...));
@@ -28,6 +37,10 @@ class ProgressiveFinder extends Finder
 
     protected function nextTick(): Collection
     {
+        if (! $this->finder && $this->stopOnFailure) {
+            return collect();
+        }
+
         return collect($this->in)->filter(fn (string $in) => $in !== $this->stop)
             ->toStringable()
             ->map(function (Stringable $path) {
