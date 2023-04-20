@@ -14,7 +14,7 @@ class Finder
     use HasFactory;
     use ForwardsCalls;
 
-    protected Base $finder;
+    protected ?Base $finder;
 
     protected bool $track = false;
 
