@@ -18,10 +18,10 @@ class Finder
 
     protected bool $track = false;
 
-    public function __construct(protected string|array $in, protected Collection $history = new Collection)
+    public function __construct(protected string|array $input, protected Collection $history = new Collection)
     {
         $this->forwardTo(
-            $this->finder = Rescue::create(fn () => Base::create()->ignoreUnreadableDirs()->in($in))->call()
+            $this->finder = Rescue::create(fn () => Base::create()->ignoreUnreadableDirs()->in($input))->call()
         )->forwardFallback()->forwardsThenReturn(fn (string $method, array $arguments) => $this->history($method, $arguments));
 
         Macro::bootstrap();

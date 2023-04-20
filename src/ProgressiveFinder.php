@@ -41,12 +41,12 @@ class ProgressiveFinder extends Finder
             return collect();
         }
 
-        return collect($this->in)->filter(fn (string $in) => $in !== $this->stop)
+        return collect($this->input)->filter(fn (string $directory) => $directory !== $this->stop)
             ->toStringable()
             ->map(function (Stringable $path) {
                 return $path->toDirectoryCollection()->withoutLast()->toRootDirectory();
             })
-            ->whenNotEmpty(function (Collection $in) {
+            ->whenNotEmpty(function (Collection $input) {
                 $instance = self::create($in->toArray());
 
                 return $this->withHistory($instance)->find();

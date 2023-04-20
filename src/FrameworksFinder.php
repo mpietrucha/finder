@@ -7,7 +7,7 @@ use Mpietrucha\Finder\Contracts\FrameworkFinderInterface;
 
 class FrameworksFinder extends InstancesFinder
 {
-    protected ?string $start = null;
+    protected null|array|string $in = null;
 
     public function __construct()
     {
@@ -23,15 +23,15 @@ class FrameworksFinder extends InstancesFinder
         });
     }
 
-    public function in(string $start): self
+    public function in(string|array $in): self
     {
-        $this->start = $start;
+        $this->in = $in;
 
         return $this;
     }
 
     public function instances(): Collection
     {
-        return parent::namespaces()->map(fn (string $namespace) => $namespace::find($this->start))->collapse();
+        return parent::namespaces()->map(fn (string $namespace) => $namespace::find($this->in))->collapse();
     }
 }

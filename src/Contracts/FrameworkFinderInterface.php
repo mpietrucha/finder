@@ -7,7 +7,7 @@ use Mpietrucha\Support\Bootstrapper;
 
 interface FrameworkFinderInterface
 {
-    public static function find(?string $start): Collection;
+    public static function find(null|array|string $in): Collection;
 
     public function name(): string;
 

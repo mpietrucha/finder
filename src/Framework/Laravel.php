@@ -17,7 +17,7 @@ class Laravel extends FrameworkFinderFactory
 
     protected const BOOTSTRAP_FILE = 'bootstrap/app.php';
 
-    public static function find(?string $in): Collection
+    public static function find(null|array|string $in): Collection
     {
         return ProgressiveFinder::create($in ?? self::DEFAULT_IN)
             ->files()
