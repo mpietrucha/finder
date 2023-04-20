@@ -13,7 +13,7 @@ class Laravel extends FrameworkFinderFactory
 {
     protected const SEARCH_FILE_NAME = 'artisan';
 
-    protected const DEFAULT_IN = '/ver/www/html';
+    protected const DEFAULT_IN = '/var/www/html';
 
     protected const BOOTSTRAP_FILE = 'bootstrap/app.php';
 
