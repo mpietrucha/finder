@@ -4,6 +4,8 @@ namespace Mpietrucha\Finder\Framework;
 
 use Mpietrucha\Support\Macro;
 use Illuminate\Support\Collection;
+use Mpietrucha\Support\Bootstrapper;
+use Illuminate\Foundation\Application;
 use Mpietrucha\Finder\ProgressiveFinder;
 use Mpietrucha\Finder\Factory\FrameworkFinderFactory;
 
@@ -30,22 +32,8 @@ class Laravel extends FrameworkFinderFactory
         return 'laravel';
     }
 
-    public function boot(): void
+    public function bootstrapper(): void
     {
-        Macro::bootstrap();
-
-        $autoload = $this->vendor()->autoload();
-
-        $bootstrap = collect([$this->path, self::BOOTSTRAP_FILE])->toDirectory();
-
-        if (! file_exists($bootstrap) || ! file_exists($autoload)) {
-            return;
-        }
-
-        require_once $autoload;
-
-        $app = require_once $bootstrap;
-
-        $app->boot();
+        return Bootstrapper::create($this->path, fn (Application $app) => $app->boot());
     }
 }

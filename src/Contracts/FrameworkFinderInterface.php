@@ -2,8 +2,8 @@
 
 namespace Mpietrucha\Finder\Contracts;
 
-use Mpietrucha\Support\Vendor;
 use Illuminate\Support\Collection;
+use Mpietrucha\Support\Bootstrapper;
 
 interface FrameworkFinderInterface
 {
@@ -11,7 +11,5 @@ interface FrameworkFinderInterface
 
     public function name(): string;
 
-    public function vendor(): Vendor;
-
-    public function boot(): void;
+    public function bootstrapper(): Bootstrapper;
 }
