@@ -4,6 +4,7 @@ namespace Mpietrucha\Finder;
 
 use Mpietrucha\Support\Macro;
 use Mpietrucha\Support\Rescue;
+use Mpietrucha\Support\Argument;
 use Illuminate\Support\Collection;
 use Mpietrucha\Support\Concerns\HasFactory;
 use Symfony\Component\Finder\Finder as Base;
@@ -20,8 +21,10 @@ class Finder
 
     public function __construct(protected string|array $input, protected Collection $history = new Collection)
     {
+        $this->input = Argument::arguments($input)->filter()->onEvery(fn (Argument $argument) => $argument->string())->call();
+
         $this->forwardTo(
-            $this->finder = Rescue::create(fn () => Base::create()->ignoreUnreadableDirs()->in($input))->call()
+            $this->finder = Rescue::create(fn () => Base::create()->ignoreUnreadableDirs()->in($this->input))->call()
         )->forwardFallback()->forwardsThenReturn(fn (string $method, array $arguments) => $this->history($method, $arguments));
 
         Macro::bootstrap();
