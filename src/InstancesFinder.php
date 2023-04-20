@@ -11,6 +11,8 @@ class InstancesFinder extends Finder
 {
     protected array $arguments = [];
 
+    protected ?Closure $instance = null;
+
     protected ?Closure $namespace = null;
 
     public function configure(): void
@@ -21,6 +23,13 @@ class InstancesFinder extends Finder
     public function namespace(Closure $callback): self
     {
         $this->namespace = $callback;
+
+        return $this;
+    }
+
+    public function instance(Closure $callback): self
+    {
+        $this->instance = $callback;
 
         return $this;
     }
@@ -41,6 +50,8 @@ class InstancesFinder extends Finder
 
     public function instances(): Collection
     {
-        return $this->namespaces()->map(fn (string $namespace) => new $namespace(...$this->arguments));
+        $instances = $this->namespaces()->map(fn (string $namespace) => new $namespace(...$this->arguments));
+
+        return $instances->filter($this->instance);
     }
 }
