@@ -11,5 +11,7 @@ interface FrameworkFinderInterface
 
     public function name(): string;
 
+    public function path(): string;
+
     public function bootstrapper(): Bootstrapper;
 }

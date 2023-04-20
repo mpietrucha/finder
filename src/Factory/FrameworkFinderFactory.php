@@ -12,4 +12,9 @@ abstract class FrameworkFinderFactory implements FrameworkFinderInterface
     public function __construct(protected string $path)
     {
     }
+
+    public function path(): string
+    {
+        return $this->path;
+    }
 }
