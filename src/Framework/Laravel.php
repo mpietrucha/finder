@@ -34,6 +34,9 @@ class Laravel extends FrameworkFinderFactory
 
     public function bootstrapper(): Bootstrapper
     {
-        return Bootstrapper::create($this->path, fn (Application $app) => $app->boot())->vendor();
+        return Bootstrapper::create(
+            collect([$this->path(), self::BOOTSTRAP_FILE])->toDirectory(),
+            fn (Application $app) => $app->boot()
+        )->vendor();
     }
 }
