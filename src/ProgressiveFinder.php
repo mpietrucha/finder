@@ -47,6 +47,8 @@ class ProgressiveFinder extends Finder
                 return $path->toDirectoryCollection()->withoutLast()->toRootDirectory();
             })
             ->whenNotEmpty(function (Collection $input) {
+                $this->cache?->forget();
+
                 return $this->clone($input->toArray())->find();
             });
     }

@@ -46,6 +46,11 @@ class Cache
         return $this;
     }
 
+    public function forget(): void
+    {
+        self::adapter()->forget($this->key);
+    }
+
     protected function keys(Finder|string|array $keys): array
     {
         if ($keys instanceof Finder) {
