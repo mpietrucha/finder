@@ -7,25 +7,28 @@ use Mpietrucha\Support\Rescue;
 use Mpietrucha\Support\Argument;
 use Illuminate\Support\Collection;
 use Mpietrucha\Support\Concerns\HasFactory;
-use Symfony\Component\Finder\Finder as Base;
 use Mpietrucha\Support\Concerns\ForwardsCalls;
+use Symfony\Component\Finder\Finder as SymfonyFinder;
 
 class Finder
 {
     use HasFactory;
+
     use ForwardsCalls;
 
-    protected ?Base $finder;
+    protected ?Cache $cache = null;
 
-    protected bool $track = false;
+    protected ?SymfonyFinder $finder;
 
-    public function __construct(protected string|array $input, protected Collection $history = new Collection)
+    protected ?Collection $history = null;
+
+    public function __construct(protected string|array $input)
     {
         $this->input = Argument::arguments($input)->filter->value()->always(fn (Argument $argument) => $argument->string())->call();
 
         $this->forwardTo(
-            $this->finder = Rescue::create(fn () => Base::create()->ignoreUnreadableDirs()->in($this->input))->call()
-        )->forwardFallback()->forwardsThenReturn(fn (string $method, array $arguments) => $this->history($method, $arguments));
+            $this->finder = Rescue::create(fn () => SymfonyFinder::create()->ignoreUnreadableDirs()->in($this->input))->call()
+        )->forwardFallback()->forwardsThenReturn(fn (string $method, array $arguments) => $this->withHistory($method, $arguments));
 
         Macro::bootstrap();
 
@@ -36,33 +39,52 @@ class Finder
     {
     }
 
-    public function flat(): self
+    public function flatten(): self
     {
         return $this->depth('== 0');
     }
 
-    public function track(bool $mode = true): self
+    public function history(): self
     {
-        $this->track = $mode;
+        $this->history ??= collect();
+
+        return $this;
+    }
+
+    public function cache(null|array|string $keys = null, mixed $expires = null): self
+    {
+        $this->cache = Cache::create($keys ?? $this->finder, $expires);
 
         return $this;
     }
 
     public function find(): Collection
     {
-        return Rescue::create(fn () => collect($this->finder))->call(collect());
+        if ($results = $this->cache?->get()) {
+            return $results;
+        }
+
+        $results = Rescue::create(fn () => collect($this->finder))->call(
+            collect()
+        );
+
+        $this->cache?->put($results);
+
+        return $results;
     }
 
-    protected function history(string $method, array $arguments): self
+    protected function withHistory(string $method, array $arguments): self
     {
-        $this->history->when($this->track, fn (Collection $history) => $history->list($method, $arguments));
+        $this->history?->list($method, $arguments);
 
         return $this;
     }
 
-    protected function withHistory(self $instance): self
+    protected function clone(array $input): self
     {
-        $this->history->each(function (Collection $arguments, string $method) use ($instance) {
+        $instance = self::create($input);
+
+        $this->history?->each(function (Collection $arguments, string $method) use ($instance) {
             $arguments->each(fn (array $arguments) => $instance->$method(...$arguments));
         });
 

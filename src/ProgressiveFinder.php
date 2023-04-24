@@ -13,7 +13,7 @@ class ProgressiveFinder extends Finder
 
     public function configure(): void
     {
-        $this->track();
+        $this->history();
     }
 
     public function stop(string $stop): self
@@ -47,9 +47,7 @@ class ProgressiveFinder extends Finder
                 return $path->toDirectoryCollection()->withoutLast()->toRootDirectory();
             })
             ->whenNotEmpty(function (Collection $input) {
-                $instance = self::create($input->toArray());
-
-                return $this->withHistory($instance)->find();
+                return $this->clone($input->toArray())->find();
             });
     }
 }

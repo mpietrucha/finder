@@ -23,7 +23,8 @@
         "mpietrucha/support": "^1.0",
         "symfony/finder": "^6.2",
         "illuminate/support": "^10.6",
-        "mpietrucha/laravel-macros": "^1.0"
+        "mpietrucha/laravel-macros": "^1.0",
+        "mpietrucha/context-aware-storage": "^1.0"
     },
     "require-dev": {
         "symfony/var-dumper": "^6.2"
