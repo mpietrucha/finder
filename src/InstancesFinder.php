@@ -3,6 +3,7 @@
 namespace Mpietrucha\Finder;
 
 use Closure;
+use Illuminate\Support\Arr;
 use Mpietrucha\Support\Reflector;
 use Illuminate\Support\Collection;
 use Symfony\Component\Finder\SplFileInfo;
@@ -11,9 +12,9 @@ class InstancesFinder extends Finder
 {
     protected array $arguments = [];
 
-    protected array $instance = [];
+    protected const CALLBACK_INSTANCE = 'instance';
 
-    protected array $namespace = [];
+    protected const CALLBACK_NAMESPACE = 'namespace';
 
     public function configure(): void
     {
@@ -22,14 +23,14 @@ class InstancesFinder extends Finder
 
     public function namespace(Closure $callback): self
     {
-        $this->namespace[] = $callback;
+        $this->callbacks[self::CALLBACK_NAMESPACE][] = $callback;
 
         return $this;
     }
 
     public function instance(Closure $callback): self
     {
-        $this->instance[] = $callback;
+        $this->callbacks[self::CALLBACK_INSTANCE][] = $callback;
 
         return $this;
     }
@@ -43,15 +44,15 @@ class InstancesFinder extends Finder
 
     public function namespaces(): Collection
     {
-        $namespaces = $this->find()->map(fn (SplFileInfo $file) => Reflector::file($file)->getName());
+        $namespaces = $this->find()->map(fn (SplFileInfo $file) => Reflector::file($file)?->getName())->filter();
 
-        return $namespaces->filterMany($this->namespace);
+        return $namespaces->pipeIntoCallback($namespaces->filter(...), Arr::get($this->callbacks, self::CALLBACK_NAMESPACE));
     }
 
     public function instances(): Collection
     {
         $instances = $this->namespaces()->map(fn (string $namespace) => new $namespace(...$this->arguments));
 
-        return $instances->filterMany($this->instance);
+        return $instances->pipeIntoCallback($instances->filter(...), Arr::get($this->callbacks, self::CALLBACK_INSTANCE));
     }
 }

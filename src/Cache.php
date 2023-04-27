@@ -3,6 +3,7 @@
 namespace Mpietrucha\Finder;
 
 use Mpietrucha\Support\Hash;
+use Mpietrucha\Support\File;
 use Mpietrucha\Support\Vendor;
 use Mpietrucha\Storage\Adapter;
 use Mpietrucha\Support\Argument;
@@ -32,7 +33,7 @@ class Cache
 
     public function get(): ?Collection
     {
-        return self::adapter()->get($this->key)?->values()->map(fn (array $file) => new SplFileInfo(...$file));
+        return self::adapter()->get($this->key)?->values()->map(fn (array $file) => File::toSplFileInfo(...$file));
     }
 
     public function put(Collection $results): self
