@@ -37,6 +37,8 @@ class ProgressiveFinder extends Finder
 
     protected function nextTick(): Collection
     {
+        $this->cache?->forget();
+
         if (! $this->finder && $this->stopOnFailure) {
             return collect();
         }
@@ -47,8 +49,6 @@ class ProgressiveFinder extends Finder
                 return $path->toDirectoryCollection()->withoutLast()->toRootDirectory();
             })
             ->whenNotEmpty(function (Collection $input) {
-                $this->cache?->forget();
-
                 return $this->clone($input->toArray())->find();
             });
     }
