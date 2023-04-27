@@ -48,8 +48,8 @@ class ProgressiveFinder extends Finder
             ->map(function (Stringable $path) {
                 return $path->toDirectoryCollection()->withoutLast()->toRootDirectory();
             })
-            ->whenNotEmpty(function (Collection $input) {
-                return $this->clone($input->toArray())->find();
-            });
+            ->whenNotEmpty(fn (Collection $input) => $this->clone($input->toArray(), function (self $instance) {
+                $instance->notPath($this->input);
+            })->find());
     }
 }

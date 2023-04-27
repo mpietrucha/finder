@@ -2,6 +2,7 @@
 
 namespace Mpietrucha\Finder;
 
+use Closure;
 use Mpietrucha\Support\Macro;
 use Mpietrucha\Support\Rescue;
 use Mpietrucha\Support\Argument;
@@ -22,7 +23,7 @@ class Finder
 
     protected ?Collection $history = null;
 
-    public function __construct(protected string|array $input)
+    public function __construct(protected string|array $input, ?Closure $beforeConfigure = null)
     {
         $this->input = Argument::arguments($input)->filter->value()->always(fn (Argument $argument) => $argument->string())->call();
 
@@ -31,6 +32,8 @@ class Finder
         )->forwardFallback()->forwardsThenReturn(fn (string $method, array $arguments) => $this->withHistory($method, $arguments));
 
         Macro::bootstrap();
+
+        value($beforeConfigure, $this);
 
         $this->configure();
     }
@@ -80,9 +83,9 @@ class Finder
         return $this;
     }
 
-    protected function clone(array $input): self
+    protected function clone(array $input, ?Closure $beforeConfigure = null): self
     {
-        $instance = self::create($input);
+        $instance = self::create($input, $beforeConfigure);
 
         $this->history?->each(function (Collection $arguments, string $method) use ($instance) {
             $arguments->each(fn (array $arguments) => $instance->$method(...$arguments));
