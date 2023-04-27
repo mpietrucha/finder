@@ -11,9 +11,9 @@ class InstancesFinder extends Finder
 {
     protected array $arguments = [];
 
-    protected ?Closure $instance = null;
+    protected array $instance = [];
 
-    protected ?Closure $namespace = null;
+    protected array $namespace = [];
 
     public function configure(): void
     {
@@ -22,14 +22,14 @@ class InstancesFinder extends Finder
 
     public function namespace(Closure $callback): self
     {
-        $this->namespace = $callback;
+        $this->namespace[] = $callback;
 
         return $this;
     }
 
     public function instance(Closure $callback): self
     {
-        $this->instance = $callback;
+        $this->instance[] = $callback;
 
         return $this;
     }
@@ -45,13 +45,13 @@ class InstancesFinder extends Finder
     {
         $namespaces = $this->find()->map(fn (SplFileInfo $file) => Reflector::file($file)->getName());
 
-        return $namespaces->filter($this->namespace);
+        return $namespaces->filterMany($this->namespace);
     }
 
     public function instances(): Collection
     {
         $instances = $this->namespaces()->map(fn (string $namespace) => new $namespace(...$this->arguments));
 
-        return $instances->filter($this->instance);
+        return $instances->filterMany($this->instance);
     }
 }
