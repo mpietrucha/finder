@@ -7,7 +7,9 @@ use Mpietrucha\Support\Macro;
 use Mpietrucha\Support\Rescue;
 use Mpietrucha\Support\Argument;
 use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use Mpietrucha\Support\Concerns\HasFactory;
+use Mpietrucha\Support\RestorableHigherProxy;
 use Mpietrucha\Support\Concerns\ForwardsCalls;
 use Symfony\Component\Finder\Finder as SymfonyFinder;
 
@@ -19,39 +21,54 @@ class Finder
 
     protected ?Cache $cache = null;
 
-    protected ?SymfonyFinder $finder;
+    protected ?SymfonyFinder $finder = null;
 
-    protected ?Collection $history = null;
+    protected bool $hasCachedResults = false;
 
-    public function __construct(protected string|array $input, ?Closure $beforeConfigure = null)
+    public function __construct(protected string|array $input = [])
     {
-        $this->input = Argument::arguments($input)->filter->value()->always(fn (Argument $argument) => $argument->string())->call();
-
-        $this->forwardTo(
-            $this->finder = Rescue::create(fn () => SymfonyFinder::create()->ignoreUnreadableDirs()->in($this->input))->call()
-        )->forwardFallback()->forwardsThenReturn(fn (string $method, array $arguments) => $this->withHistory($method, $arguments));
-
         Macro::bootstrap();
 
-        value($beforeConfigure, $this);
+        $this->setInput($input)
+            ->forwardTo(fn () => $this->setFinder(
+                Rescue::create(fn () => SymfonyFinder::create()->ignoreUnreadableDirs()->in($this->input))->call(...)
+            ))
+            ->forwardFallback()
+            ->forwardThenReturnThis()
+            ->forwardImmediatelyTapClosure()
+            ->forwardFallbackRestore(
+                fn (RestorableHigherProxy $proxy) => $proxy->__latest()->__hits()->except('in'),
+                fn (?SymfonyFinder $finder) => $this->setFinder($finder)
+            )
+            ->forwardMethodTap('in', function (string|array $input) {
+                $this->notPath($this->input);
 
-        $this->configure();
+                $this->setInput($input);
+            })
+            ->configure();
     }
 
     public function configure(): void
     {
     }
 
+    public function setFinder(null|Closure|SymfonyFinder $finder): ?SymfonyFinder
+    {
+        return $this->finder ??= value($finder);
+    }
+
+    public function setInput(string|array $input): self
+    {
+        $this->input = Argument::arguments($input)->filter->value()->always(function ($argument) {
+            return $argument->string();
+        })->call();
+
+        return $this;
+    }
+
     public function flatten(): self
     {
         return $this->depth('== 0');
-    }
-
-    public function history(): self
-    {
-        $this->history ??= collect();
-
-        return $this;
     }
 
     public function cache(null|array|string $keys = null, mixed $expires = null): self
@@ -63,34 +80,46 @@ class Finder
 
     public function find(): Collection
     {
-        if ($results = $this->cache?->get()) {
+        return $this->lazy()->collect();
+    }
+
+    public function lazy(): LazyCollection
+    {
+        $this->hasCachedResults = false;
+
+        if ($results = $this->getCacheProvider()?->get()) {
+            $this->hasCachedResults = true;
+
             return $results;
         }
 
-        $results = Rescue::create(fn () => collect($this->finder))->call(
-            collect()
-        );
+        $iterator = Rescue::create(fn () => $this->finder?->getIterator())->call();
 
-        $this->cache?->put($results);
+        if (! $iterator) {
+            return LazyCollection::empty();
+        }
+
+        $results = LazyCollection::make($iterator);
+
+        $this->getCacheProvider()?->put($results);
 
         return $results;
     }
 
-    protected function withHistory(string $method, array $arguments): self
+    public function getCacheProvider(): ?Cache
     {
-        $this->history?->list($method, $arguments);
-
-        return $this;
+        return $this->cache;
     }
 
-    protected function clone(array $input, ?Closure $beforeConfigure = null): self
+    public function getCacheAwareProvider(): CacheAware
     {
-        $instance = self::create($input, $beforeConfigure);
+        return $this->cacheAware ??= CacheAware::create($this->getCacheProvider());
+    }
 
-        $this->history?->each(function (Collection $arguments, string $method) use ($instance) {
-            $arguments->each(fn (array $arguments) => $instance->$method(...$arguments));
+    public function getResultsBuilder(): ResultBuilder
+    {
+        return ResultBuilder::create($this->find(...), function () {
+            return $this->hasCachedResults;
         });
-
-        return $instance;
     }
 }

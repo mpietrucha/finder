@@ -2,19 +2,13 @@
 
 namespace Mpietrucha\Finder;
 
-use Illuminate\Support\Collection;
 use Illuminate\Support\Stringable;
+use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 
 class ProgressiveFinder extends Finder
 {
-    protected bool $stopOnFailure = false;
-
     protected string $stop = DIRECTORY_SEPARATOR;
-
-    public function configure(): void
-    {
-        $this->history();
-    }
 
     public function stop(string $stop): self
     {
@@ -23,33 +17,21 @@ class ProgressiveFinder extends Finder
         return $this;
     }
 
-    public function stopOnFailure(): self
+    public function lazy(): LazyCollection
     {
-        $this->stopOnFailure = true;
-
-        return $this;
+        return parent::lazy()->whenEmpty($this->nextTick(...));
     }
 
-    public function find(): Collection
+    protected function nextTick(): LazyCollection
     {
-        return parent::find()->whenEmpty($this->nextTick(...));
-    }
-
-    protected function nextTick(): Collection
-    {
-        $this->cache?->forget();
-
-        if (! $this->finder && $this->stopOnFailure) {
-            return collect();
-        }
-
         return collect($this->input)->filter(fn (string $directory) => $directory !== $this->stop)
             ->toStringable()
             ->map(function (Stringable $path) {
                 return $path->toDirectoryCollection()->withoutLast()->toRootDirectory();
             })
-            ->whenNotEmpty(fn (Collection $input) => $this->clone($input->toArray(), function (self $instance) {
-                $instance->notPath($this->input);
-            })->find());
+            ->whenEmpty(fn () => LazyCollection::empty())
+            ->whenNotEmpty(function (Collection $input) {
+                return $this->forward('in', $input->toArray())->lazy();
+            });
     }
 }

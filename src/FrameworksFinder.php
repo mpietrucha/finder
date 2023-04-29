@@ -3,6 +3,7 @@
 namespace Mpietrucha\Finder;
 
 use Illuminate\Support\Collection;
+use Symfony\Component\Finder\SplFileInfo;
 use Mpietrucha\Finder\Concerns\WithDeepInput;
 use Mpietrucha\Finder\Contracts\FrameworkFinderInterface;
 
@@ -10,9 +11,11 @@ class FrameworksFinder extends InstancesFinder
 {
     use WithDeepInput;
 
+    protected const DIRECTORY = '/Framework';
+
     public function __construct()
     {
-        parent::__construct(__DIR__.'/Framework');
+        parent::__construct(__DIR__.self::DIRECTORY);
     }
 
     public function configure(): void
@@ -26,6 +29,15 @@ class FrameworksFinder extends InstancesFinder
 
     public function instances(): Collection
     {
-        return parent::namespaces()->map(fn (string $namespace) => $namespace::find($this->in))->collapse();
+        return $this->getResultsBuilder()
+            ->source($this->namespaces(...))
+            ->fresh(function (Collection $namespaces) {
+                return $namespaces->map(fn (string $namespace) => $this->getCacheAwareProvider()->put(
+                    $namespace::find($this->in), $namespace
+                ))
+                ->collapse()
+                ->tap($this->getCacheAwareProvider()->commit(...));
+            })
+            ->build();
     }
 }

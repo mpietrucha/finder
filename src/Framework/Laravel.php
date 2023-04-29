@@ -23,9 +23,7 @@ class Laravel extends FrameworkFinderFactory
         return ProgressiveFinder::create($in ?? self::DEFAULT_IN)
             ->files()
             ->name(self::SEARCH_FILE_NAME)
-            ->find()
-            ->map->getPath()
-            ->map(self::create(...));
+            ->find();
     }
 
     public function name(): string

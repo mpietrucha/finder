@@ -10,6 +10,8 @@ use Symfony\Component\Finder\SplFileInfo;
 
 class InstancesFinder extends Finder
 {
+    protected array $callbacks = [];
+
     protected array $arguments = [];
 
     protected const CALLBACK_INSTANCE = 'instance';
@@ -21,16 +23,16 @@ class InstancesFinder extends Finder
         $this->files()->name('*.php');
     }
 
-    public function namespace(Closure $callback): self
+    public function namespace(Closure $callback, bool $cached = false): self
     {
-        $this->callbacks[self::CALLBACK_NAMESPACE][] = $callback;
+        $this->callbacks[self::CALLBACK_NAMESPACE][$cached][] = $callback;
 
         return $this;
     }
 
-    public function instance(Closure $callback): self
+    public function instance(Closure $callback, bool $cached = false): self
     {
-        $this->callbacks[self::CALLBACK_INSTANCE][] = $callback;
+        $this->callbacks[self::CALLBACK_INSTANCE][$cached][] = $callback;
 
         return $this;
     }
@@ -44,15 +46,33 @@ class InstancesFinder extends Finder
 
     public function namespaces(): Collection
     {
-        $namespaces = $this->find()->map(fn (SplFileInfo $file) => Reflector::file($file)?->getName())->filter();
-
-        return $namespaces->pipeIntoCallback($namespaces->filter(...), Arr::get($this->callbacks, self::CALLBACK_NAMESPACE));
+        return $this->getResultsBuilder()
+            ->fresh(function (Collection $namespaces) {
+                return $namespaces->map(fn (SplFileInfo $file) => Reflector::file($file)?->getName())->filter();
+            })
+            ->after(function (Collection $namespaces, bool $cached) {
+                return $this->withCallbacks($namespaces, self::CALLBACK_NAMESPACE, $cached);
+            })
+            ->build();
     }
 
     public function instances(): Collection
     {
-        $instances = $this->namespaces()->map(fn (string $namespace) => new $namespace(...$this->arguments));
+        return $this->getResultsBuilder()
+            ->source($this->namespaces(...))
+            ->fresh(function (Collection $namespaces) {
+                return $namespaces->map(fn (string $namespace) => new $namespace(...$this->arguments));
+            })
+            ->after(function (Collection $instances, bool $cached) {
+                return $this->withCallbacks($instances, self::CALLBACK_INSTANCE, $cached);
+            })
+            ->build();
+    }
 
-        return $instances->pipeIntoCallback($instances->filter(...), Arr::get($this->callbacks, self::CALLBACK_INSTANCE));
+    protected function withCallbacks(Collection $results, string $key, bool $cached): Collection
+    {
+        $callbacks = Arr::get($this->callbacks, collect([$key, (int) $cached])->toDotWord()->toString());
+
+        return $results->pipeIntoCallback($results->filter(...), $callbacks);
     }
 }
