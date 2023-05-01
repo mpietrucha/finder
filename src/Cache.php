@@ -33,13 +33,11 @@ class Cache
 
     protected bool $wasPreviouslyCached = false;
 
-    protected const TIME_POOL = 'finder.cache';
-
     public function __construct(Finder|string|array $keys, protected mixed $expires)
     {
         $this->key = Key::create($keys)->hash();
 
-        $this->time(self::TIME_POOL)->start();
+        $this->time('finder.cache')->start();
     }
 
     public static function adapter(): Adapter
