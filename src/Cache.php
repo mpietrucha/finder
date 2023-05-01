@@ -33,13 +33,13 @@ class Cache
 
     protected bool $wasPreviouslyCached = false;
 
-    protected const START_POOL_NAME = 'finder.cache.start';
+    protected const TIME_POOL = 'finder.cache';
 
     public function __construct(Finder|string|array $keys, protected mixed $expires)
     {
         $this->key = Key::create($keys)->hash();
 
-        // $this->time()->add(self::START_POOL_NAME);
+        $this->time(self::TIME_POOL)->start();
     }
 
     public static function adapter(): Adapter
@@ -136,6 +136,6 @@ class Cache
 
     protected function incrementExpiryBySearchTime(Carbon $expires): Carbon
     {
-        return $expires->add($this->time()->interval(self::START_POOL_NAME));
+        return $expires->add($this->time()->startInterval());
     }
 }
