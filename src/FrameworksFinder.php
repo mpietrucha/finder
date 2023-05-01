@@ -30,6 +30,7 @@ class FrameworksFinder extends InstancesFinder
     public function instances(): Collection
     {
         return $this->getResultsBuilder()
+            ->usingCacheAware()
             ->source($this->namespaces(...))
             ->fresh(function (Collection $namespaces) {
                 return $namespaces->map(fn (string $namespace) => $this->getCacheAwareProvider()->put(

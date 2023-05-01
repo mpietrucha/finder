@@ -3,6 +3,7 @@
 namespace Mpietrucha\Finder;
 
 use Closure;
+use Carbon\Carbon;
 use Mpietrucha\Support\Key;
 use Mpietrucha\Support\File;
 use Mpietrucha\Support\Vendor;
@@ -13,10 +14,16 @@ use Illuminate\Support\LazyCollection;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 use Mpietrucha\Support\Concerns\HasFactory;
+use Mpietrucha\Storage\Contracts\ExpiryInterface;
+use Mpietrucha\Support\Concerns\InteractsWithTime;
 
 class Cache
 {
     use HasFactory;
+
+    use InteractsWithTime;
+
+    protected static ?Adapter $adapter = null;
 
     protected string $key;
 
@@ -24,11 +31,15 @@ class Cache
 
     protected bool $write = true;
 
-    protected static ?Adapter $adapter = null;
+    protected bool $wasPreviouslyCached = false;
+
+    protected const START_POOL_NAME = 'finder.cache.start';
 
     public function __construct(Finder|string|array $keys, protected mixed $expires)
     {
         $this->key = Key::create($keys)->hash();
+
+        // $this->time()->add(self::START_POOL_NAME);
     }
 
     public static function adapter(): Adapter
@@ -52,6 +63,8 @@ class Cache
 
     public function get(): ?LazyCollection
     {
+        $this->wasPreviouslyCached = false;
+
         if (! $this->read) {
             return null;
         }
@@ -61,6 +74,8 @@ class Cache
         if (! $entry) {
             return null;
         }
+
+        $this->wasPreviouslyCached = true;
 
         return LazyCollection::make(function () use ($entry) {
             yield from $entry();
@@ -72,15 +87,30 @@ class Cache
         if ($this->write) {
             $entries = $this->entries($results);
 
-            self::adapter()->put($this->key, fn () => $this->results($entries), $this->expires);
+            return $this->force(fn () => $this->results($entries), false);
         }
 
         return $this;
     }
 
-    public function force(Closure $entry): self
+    public function force(Closure $entry, bool $overrideExpiry = true): self
     {
-        self::adapter()->put($this->key, $entry, $this->expires);
+        $adapter = self::adapter();
+
+        $adapter->expiry(function (ExpiryInterface $expiry) use ($overrideExpiry) {
+            $expiry->overrideOnExists($overrideExpiry);
+
+            $expiry->onExpiresResolved($this->incrementExpiryBySearchTime(...));
+        });
+
+        $adapter->put($this->key, $entry, $this->expires);
+
+        return $this;
+    }
+
+    public function forget(): self
+    {
+        self::adapter()->forget($this->key);
 
         return $this;
     }
@@ -99,8 +129,13 @@ class Cache
         return $entries->map(fn (array $file) => File::toSplFileInfo(...$file));
     }
 
-    public function forget(): void
+    public function wasPreviouslyCached(): bool
     {
-        self::adapter()->forget($this->key);
+        return $this->wasPreviouslyCached;
+    }
+
+    protected function incrementExpiryBySearchTime(Carbon $expires): Carbon
+    {
+        return $expires->add($this->time()->interval(self::START_POOL_NAME));
     }
 }

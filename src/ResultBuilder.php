@@ -11,11 +11,13 @@ class ResultBuilder
 {
     use HasFactory;
 
+    protected bool $aware = false;
+
     protected ?Closure $fresh = null;
 
     protected ?Closure $after = null;
 
-    public function __construct(protected Closure|Collection $source = new Collection, protected Closure|bool $cached = false)
+    public function __construct(protected ?Cache $cache, protected Closure|Collection $source = new Collection)
     {
     }
 
@@ -40,14 +42,30 @@ class ResultBuilder
         return $this;
     }
 
+    public function usingCacheAware(bool $mode = true): self
+    {
+        $this->aware = $mode;
+
+        return $this;
+    }
+
     public function build(): Collection
     {
-        return value($this->source)->pipe($this->withFresh(...))->pipe($this->withAfter(...));
+        return $this->withAware()->pipe($this->withFresh(...))->pipe($this->withAfter(...));
     }
 
     public function cached(): bool
     {
-        return value($this->cached);
+        return $this->cache?->wasPreviouslyCached() === true;
+    }
+
+    public function withAware(): Collection
+    {
+        if ($this->aware) {
+            $this->cache?->write(false);
+        }
+
+        return value($this->source);
     }
 
     public function withFresh(Collection $results): Collection
@@ -61,6 +79,8 @@ class ResultBuilder
 
     public function withAfter(Collection $results): Collection
     {
-        return value($this->after, $results, $this->cached()) ?? $results;
+        return (value($this->after, $results, $this->cached()) ?? $results)->tap(function () {
+            $this->cache?->write();
+        });
     }
 }

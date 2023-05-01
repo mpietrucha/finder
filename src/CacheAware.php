@@ -6,7 +6,7 @@ use Exception;
 use Closure;
 use Mpietrucha\Support\Caller;
 use Illuminate\Support\Collection;
-use Opis\Closure\SerializableClosure;
+use Mpietrucha\Support\Serializer;
 use Mpietrucha\Support\Concerns\HasFactory;
 
 class CacheAware
@@ -42,7 +42,7 @@ class CacheAware
 
     public function restore(): Collection
     {
-        return $this->results->mapSpread(fn (Collection $files, SerializableClosure $builder) => $builder(
+        return Serializer::unwrap($this->results)->mapSpread(fn (Collection $files, Closure $builder) => $builder(
             $this->cache->results($files)
         ))->collapse();
     }

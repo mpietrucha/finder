@@ -23,14 +23,13 @@ class Finder
 
     protected ?SymfonyFinder $finder = null;
 
-    protected bool $hasCachedResults = false;
-
     public function __construct(protected string|array $input = [])
     {
         Macro::bootstrap();
 
-        $this->setInput($input)
-            ->forwardTo(fn () => $this->setFinder(
+        $this->setInput($input);
+
+        $this->forwardTo(fn () => $this->setFinder(
                 Rescue::create(fn () => SymfonyFinder::create()->ignoreUnreadableDirs()->in($this->input))->call(...)
             ))
             ->forwardFallback()
@@ -41,9 +40,7 @@ class Finder
                 fn (?SymfonyFinder $finder) => $this->setFinder($finder)
             )
             ->forwardMethodTap('in', function (string|array $input) {
-                $this->notPath($this->input);
-
-                $this->setInput($input);
+                $this->notPath($this->input)->setInput($input);
             })
             ->configure();
     }
@@ -57,13 +54,11 @@ class Finder
         return $this->finder ??= value($finder);
     }
 
-    public function setInput(string|array $input): self
+    public function setInput(string|array $input): array
     {
-        $this->input = Argument::arguments($input)->filter->value()->always(function ($argument) {
+        return $this->input = Argument::arguments($input)->filter->value()->always(function ($argument) {
             return $argument->string();
         })->call();
-
-        return $this;
     }
 
     public function flatten(): self
@@ -85,11 +80,7 @@ class Finder
 
     public function lazy(): LazyCollection
     {
-        $this->hasCachedResults = false;
-
         if ($results = $this->getCacheProvider()?->get()) {
-            $this->hasCachedResults = true;
-
             return $results;
         }
 
@@ -118,8 +109,6 @@ class Finder
 
     public function getResultsBuilder(): ResultBuilder
     {
-        return ResultBuilder::create($this->find(...), function () {
-            return $this->hasCachedResults;
-        });
+        return ResultBuilder::create($this->getCacheProvider())->source($this->find(...));
     }
 }
