@@ -43,8 +43,8 @@ class Laravel extends FrameworkFinderFactory
 
     protected function after(Application $app): void
     {
-        $app->make(Kernel::class);
+        $kernel = $app->make(Kernel::class);
 
-        $app->bootstrap();
+        $kernel->bootstrap();
     }
 }
