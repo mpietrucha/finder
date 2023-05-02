@@ -33,7 +33,7 @@ class Laravel extends FrameworkFinderFactory
 
     public function bootstrapper(): Bootstrapper
     {
-        return Bootstrapper::create($this->bootstrap(), $this->after(...))->vendor();
+        return Bootstrapper::create($this->bootstrap(), fn () => $this->after())->vendor();
     }
 
     protected function bootstrap(): string
