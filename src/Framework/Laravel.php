@@ -3,6 +3,7 @@
 namespace Mpietrucha\Finder\Framework;
 
 use Mpietrucha\Support\Macro;
+use Mpietrucha\Support\File;
 use Illuminate\Support\Collection;
 use Mpietrucha\Support\Bootstrapper;
 use Illuminate\Foundation\Application;
@@ -33,12 +34,12 @@ class Laravel extends FrameworkFinderFactory
 
     public function bootstrapper(): Bootstrapper
     {
-        return Bootstrapper::create($this->bootstrap(), fn () => $this->after())->vendor();
+        return Bootstrapper::create($this->bootstrap(), $this->after(...))->vendor();
     }
 
     protected function bootstrap(): string
     {
-        return collect([$this->path(), self::BOOTSTRAP_FILE])->toDirectory();
+        return collect([File::dirname($this->path()), self::BOOTSTRAP_FILE])->toDirectory();
     }
 
     protected function after(Application $app): void
