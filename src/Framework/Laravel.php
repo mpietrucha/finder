@@ -34,18 +34,15 @@ class Laravel extends FrameworkFinderFactory
 
     public function bootstrapper(): Bootstrapper
     {
-        return Bootstrapper::create($this->bootstrap(), Closure::fromCallable($this->after(...)))->vendor();
+        return Bootstrapper::create($this->bootstrap(), function (Application $app) {
+            $kernel = $app->make(Kernel::class);
+
+            $kernel->bootstrap();
+        })->vendor();
     }
 
     protected function bootstrap(): string
     {
         return collect([File::dirname($this->path()), self::BOOTSTRAP_FILE])->toDirectory();
-    }
-
-    protected function after(Application $app): void
-    {
-        $kernel = $app->make(Kernel::class);
-
-        $kernel->bootstrap();
     }
 }
