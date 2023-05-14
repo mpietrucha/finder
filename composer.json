@@ -24,9 +24,12 @@
         "symfony/finder": "^6.2",
         "illuminate/support": "^10.6",
         "mpietrucha/laravel-macros": "^1.0",
-        "mpietrucha/context-aware-storage": "^1.0"
+        "mpietrucha/context-aware-storage": "^1.0",
+        "symfony/mime": "^6.2",
+        "symfony/process": "^6.2"
     },
     "require-dev": {
-        "symfony/var-dumper": "^6.2"
+        "symfony/var-dumper": "^6.2",
+        "mpietrucha/cli": "^1.0"
     }
 }

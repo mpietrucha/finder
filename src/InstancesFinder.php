@@ -7,8 +7,9 @@ use Illuminate\Support\Arr;
 use Mpietrucha\Support\Reflector;
 use Illuminate\Support\Collection;
 use Symfony\Component\Finder\SplFileInfo;
+use Mpietrucha\Finder\Contracts\InstanceableFinderInterface;
 
-class InstancesFinder extends Finder
+class InstancesFinder extends Finder implements InstanceableFinderInterface
 {
     protected array $callbacks = [];
 
@@ -61,7 +62,7 @@ class InstancesFinder extends Finder
         return $this->getResultsBuilder()
             ->source($this->namespaces(...))
             ->fresh(function (Collection $namespaces) {
-                return $namespaces->map(fn (string $namespace) => new $namespace(...$this->arguments));
+                return $namespaces->mapIntoInstance($this->arguments);
             })
             ->after(function (Collection $instances, bool $cached) {
                 return $this->withCallbacks($instances, self::CALLBACK_INSTANCE, $cached);

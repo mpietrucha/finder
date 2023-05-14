@@ -6,10 +6,13 @@ use Illuminate\Support\Collection;
 use Symfony\Component\Finder\SplFileInfo;
 use Mpietrucha\Finder\Concerns\WithDeepInput;
 use Mpietrucha\Finder\Contracts\FrameworkFinderInterface;
+use Mpietrucha\Finder\Concerns\WithCacheAware;
 
 class FrameworksFinder extends InstancesFinder
 {
     use WithDeepInput;
+
+    use WithCacheAware;
 
     protected const DIRECTORY = '/Framework';
 

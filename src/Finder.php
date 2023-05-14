@@ -3,6 +3,7 @@
 namespace Mpietrucha\Finder;
 
 use Closure;
+use SplFileInfo;
 use Mpietrucha\Support\Macro;
 use Mpietrucha\Support\Rescue;
 use Mpietrucha\Support\Argument;
@@ -12,14 +13,16 @@ use Mpietrucha\Support\Concerns\HasFactory;
 use Mpietrucha\Support\RestorableHigherProxy;
 use Mpietrucha\Support\Concerns\ForwardsCalls;
 use Symfony\Component\Finder\Finder as SymfonyFinder;
+use Mpietrucha\Finder\Contracts\FinderInterface;
+use Mpietrucha\Finder\Concerns\WithCache;
 
-class Finder
+class Finder implements FinderInterface
 {
     use HasFactory;
 
     use ForwardsCalls;
 
-    protected ?Cache $cache = null;
+    use WithCache;
 
     protected ?SymfonyFinder $finder = null;
 
@@ -66,11 +69,9 @@ class Finder
         return $this->depth('== 0');
     }
 
-    public function cache(null|array|string $keys = null, mixed $expires = null): self
+    public function first(): SplFileInfo
     {
-        $this->cache = Cache::create($keys ?? $this->finder, $expires);
-
-        return $this;
+        return $this->find()->first();
     }
 
     public function find(): Collection
@@ -95,16 +96,6 @@ class Finder
         $this->getCacheProvider()?->put($results);
 
         return $results;
-    }
-
-    public function getCacheProvider(): ?Cache
-    {
-        return $this->cache;
-    }
-
-    public function getCacheAwareProvider(): CacheAware
-    {
-        return $this->cacheAware ??= CacheAware::create($this->getCacheProvider());
     }
 
     public function getResultsBuilder(): ResultBuilder
