@@ -53,6 +53,7 @@ class ExtensionHandler extends ExecutableFinderFactory implements ExecutableFind
             $extensions->push(File::guessExtension($input));
         });
 
+
         self::withStaticInput($extensions->filter()->first());
     }
 
