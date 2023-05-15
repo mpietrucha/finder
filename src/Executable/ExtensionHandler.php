@@ -47,11 +47,13 @@ class ExtensionHandler extends ExecutableFinderFactory implements ExecutableFind
             return;
         }
 
-        $extension = collect([
-            File::extension($input), File::guessExtension($input)
-        ])->filter()->first();
+        $extensions = collect([
+            File::extension($input)
+        ])->when(File::exists($input), function (Collection $extensions) use ($input) {
+            $extensions->push(File::guessExtension($input));
+        });
 
-        self::withStaticInput($extension);
+        self::withStaticInput($extensions->filter()->first());
     }
 
     public function result(): ?string

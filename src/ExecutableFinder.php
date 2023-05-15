@@ -85,7 +85,7 @@ class ExecutableFinder extends ExecutableFinderFactory implements FinderInterfac
             ]))
             ->collapse()
             ->mapSpread($this->toResolvedResult(...))
-             ->filter();
+            ->filter();
 
         $this->getCacheProvider()?->put($results);
 
