@@ -5,6 +5,7 @@ namespace Mpietrucha\Finder\Executable;
 use SplFileInfo;
 use Mpietrucha\Finder\Concerns\WithStaticInput;
 use Mpietrucha\Support\File;
+use Illuminate\Support\Collection;
 use Mpietrucha\Finder\Factory\ExecutableFinderFactory;
 use Mpietrucha\Finder\Contracts\ExecutableFinderInterface;
 use Mpietrucha\Finder\Concerns\ResolveWith;
