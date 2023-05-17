@@ -1,6 +1,6 @@
 <?php
 
-namespace Mpietrucha\Finder\Factory;
+namespace Mpietrucha\Finder;
 
 use Closure;
 use Mpietrucha\Support\Argument;
@@ -10,7 +10,7 @@ use Mpietrucha\Support\Concerns\HasFactory;
 use Mpietrucha\Finder\Executable\ClosureHandler;
 use Mpietrucha\Finder\Contracts\ExecutableFinderInterface;
 
-abstract class ExecutableFinderFactory
+abstract class AbstractExecutableFinder
 {
     use HasFactory;
 

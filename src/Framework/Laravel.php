@@ -9,9 +9,8 @@ use Mpietrucha\Support\Bootstrapper;
 use Illuminate\Foundation\Application;
 use Illuminate\Contracts\Console\Kernel;
 use Mpietrucha\Finder\ProgressiveFinder;
-use Mpietrucha\Finder\Factory\FrameworkFinderFactory;
 
-class Laravel extends FrameworkFinderFactory
+class Laravel extends AbstractFramework
 {
     protected const SEARCH_FILE_NAME = 'artisan';
 

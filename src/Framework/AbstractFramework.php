@@ -1,11 +1,11 @@
 <?php
 
-namespace Mpietrucha\Finder\Factory;
+namespace Mpietrucha\Finder;
 
 use Mpietrucha\Support\Concerns\HasFactory;
 use Mpietrucha\Finder\Contracts\FrameworkFinderInterface;
 
-abstract class FrameworkFinderFactory implements FrameworkFinderInterface
+abstract class AbstractFramework implements FrameworkFinderInterface
 {
     use HasFactory;
 

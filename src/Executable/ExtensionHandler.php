@@ -6,11 +6,11 @@ use SplFileInfo;
 use Mpietrucha\Finder\Concerns\WithStaticInput;
 use Mpietrucha\Support\File;
 use Illuminate\Support\Collection;
-use Mpietrucha\Finder\Factory\ExecutableFinderFactory;
+use Mpietrucha\Finder\AbstractExecutableFinder;
 use Mpietrucha\Finder\Contracts\ExecutableFinderInterface;
 use Mpietrucha\Finder\Concerns\ResolveWith;
 
-class ExtensionHandler extends ExecutableFinderFactory implements ExecutableFinderInterface
+class ExtensionHandler extends AbstractExecutableFinder implements ExecutableFinderInterface
 {
     use ResolveWith;
 
