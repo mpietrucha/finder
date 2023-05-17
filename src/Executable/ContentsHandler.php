@@ -7,11 +7,10 @@ use Mpietrucha\Support\Types;
 use Mpietrucha\Support\File;
 use Illuminate\Support\Stringable;
 use Mpietrucha\Finder\Concerns\WithStaticInput;
-use Mpietrucha\Finder\AbstractExecutableFinder;
 use Mpietrucha\Finder\Contracts\ExecutableFinderInterface;
 use Mpietrucha\Finder\Concerns\ResolveWith;
 
-class ContentsHandler extends AbstractExecutableFinder implements ExecutableFinderInterface
+class ContentsHandler extends Executable implements ExecutableFinderInterface
 {
     use ResolveWith;
 

@@ -6,7 +6,7 @@ use Closure;
 use Mpietrucha\Finder\Concerns\ResolveWith;
 use Mpietrucha\Finder\Contracts\ExecutableFinderInterface;
 
-abstract class AbstractHandler implements ExecutableFinderInterface
+abstract class Handler implements ExecutableFinderInterface
 {
     use ResolveWith;
 

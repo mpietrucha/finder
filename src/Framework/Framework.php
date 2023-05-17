@@ -5,7 +5,7 @@ namespace Mpietrucha\Finder;
 use Mpietrucha\Support\Concerns\HasFactory;
 use Mpietrucha\Finder\Contracts\FrameworkFinderInterface;
 
-abstract class AbstractFramework implements FrameworkFinderInterface
+abstract class Framework implements FrameworkFinderInterface
 {
     use HasFactory;
 

@@ -13,10 +13,10 @@ use Illuminate\Support\LazyCollection;
 use Mpietrucha\Support\Concerns\HasFactory;
 use Mpietrucha\Support\Concerns\HasInputFile;
 use Mpietrucha\Finder\Contracts\FinderInterface;
-use Mpietrucha\Finder\AbstractExecutableFinder;
+use Mpietrucha\Finder\Executable\Executable;
 use Mpietrucha\Finder\Contracts\ExecutableFinderInterface;
 
-class ExecutableFinder extends AbstractExecutableFinder implements FinderInterface
+class ExecutableFinder extends Executable implements FinderInterface
 {
     use HasFactory;
 

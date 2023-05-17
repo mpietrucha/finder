@@ -5,7 +5,7 @@ namespace Mpietrucha\Finder\Executable;
 use Closure;
 use Mpietrucha\Finder\Contracts\ExecutableFinderInterface;
 
-class ClosureHandler extends AbstractHandler
+class ClosureHandler extends Handler
 {
     public function __construct(protected Closure $handler)
     {
