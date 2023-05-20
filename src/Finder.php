@@ -30,9 +30,10 @@ class Finder implements FinderInterface
 
         $this->setInput($input);
 
-        $this->setFinder(fn () => Rescue::create(fn () => SymfonyFinder::create()->ignoreUnreadableDirs()->in($this->input))->call(...))
+        $this->setFinder(Rescue::create(fn () => SymfonyFinder::create()->ignoreUnreadableDirs()->in($this->input))->call(...))
             ->forwardFallback()
             ->forwardThenReturnThis()
+            ->forwardResolveClosure()
             ->forwardImmediatelyTapClosure()
             ->forwardFallbackRestore(
                 fn (RestorableHigherProxy $proxy) => $proxy->__latest()->__hits()->except('in'),
