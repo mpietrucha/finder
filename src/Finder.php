@@ -65,7 +65,7 @@ class Finder implements FinderInterface
         return $this->depth('== 0');
     }
 
-    public function first(): SplFileInfo
+    public function first(): ?SplFileInfo
     {
         return $this->find()->first();
     }
