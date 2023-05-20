@@ -10,7 +10,7 @@ trait WithCache
 
     public function cache(null|array|string $keys = null, mixed $expires = null): self
     {
-        $this->cache = Cache::create($keys ?? $this->finder, $expires);
+        $this->cache = Cache::create($keys ?? $this->getForward(), $expires);
 
         return $this;
     }

@@ -24,17 +24,13 @@ class Finder implements FinderInterface
 
     use WithCache;
 
-    protected ?SymfonyFinder $finder = null;
-
     public function __construct(protected string|array $input = [])
     {
         Macro::bootstrap();
 
         $this->setInput($input);
 
-        $this->forwardTo(fn () => $this->setFinder(
-                Rescue::create(fn () => SymfonyFinder::create()->ignoreUnreadableDirs()->in($this->input))->call(...)
-            ))
+        $this->setFinder(fn () => Rescue::create(fn () => SymfonyFinder::create()->ignoreUnreadableDirs()->in($this->input))->call(...))
             ->forwardFallback()
             ->forwardThenReturnThis()
             ->forwardImmediatelyTapClosure()
@@ -52,9 +48,9 @@ class Finder implements FinderInterface
     {
     }
 
-    public function setFinder(null|Closure|SymfonyFinder $finder): ?SymfonyFinder
+    public function setFinder(null|Closure|SymfonyFinder $finder): self
     {
-        return $this->finder ??= value($finder);
+        return $this->forwardTo($finder);
     }
 
     public function setInput(string|array $input): array
@@ -85,7 +81,7 @@ class Finder implements FinderInterface
             return $results;
         }
 
-        $iterator = Rescue::create(fn () => $this->finder?->getIterator())->call();
+        $iterator = Rescue::create(fn () => $this->getForward()?->getIterator())->call();
 
         if (! $iterator) {
             return LazyCollection::empty();
