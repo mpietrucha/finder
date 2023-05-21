@@ -49,9 +49,7 @@ class CacheAware
 
     public function builder(string $namespace, Collection $entries): Collection
     {
-        if (! resolves_to_object($namespace)) {
-            throw new InvalidArgumentException('Given namespace', [$namespace], 'is not resolvable to valid object');
-        }
+        throw_unless(resolves_to_object($namespace), new InvalidArgumentException('Given namespace', [$namespace], 'is not resolvable to valid object'));
 
         return $entries->mapInto($namespace);
     }
