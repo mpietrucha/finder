@@ -2,7 +2,7 @@
 
 namespace Mpietrucha\Finder;
 
-use Exception;
+use Mpietrucha\Exception\InvalidArgumentException;
 use Closure;
 use Mpietrucha\Support\Caller;
 use Illuminate\Support\Collection;
@@ -50,7 +50,7 @@ class CacheAware
     public function builder(string $namespace, Collection $entries): Collection
     {
         if (! resolves_to_object($namespace)) {
-            throw new Exception('Given namespace is not resolvable to valid object');
+            throw new InvalidArgumentException('Given namespace', [$namespace], 'is not resolvable to valid object');
         }
 
         return $entries->mapInto($namespace);
