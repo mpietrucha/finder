@@ -59,7 +59,7 @@ class InstancesFinder extends Finder implements InstancesFinderInterface
 
     public function instanceable(): Collection
     {
-        return $this->namespaces()->reject(fn (SplFileInfo $file) => Reflector::file($file)->isAbstract());
+        return $this->namespaces()->reject(fn (string $namespace) => Reflector::create($namespace)->isAbstract());
     }
 
     public function instances(): Collection
