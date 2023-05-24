@@ -7,9 +7,9 @@ use Illuminate\Support\Arr;
 use Mpietrucha\Support\Reflector;
 use Illuminate\Support\Collection;
 use Symfony\Component\Finder\SplFileInfo;
-use Mpietrucha\Finder\Contracts\InstanceableFinderInterface;
+use Mpietrucha\Finder\Contracts\InstancesFinderInterface;
 
-class InstancesFinder extends Finder implements InstanceableFinderInterface
+class InstancesFinder extends Finder implements InstancesFinderInterface
 {
     protected array $callbacks = [];
 
@@ -57,12 +57,17 @@ class InstancesFinder extends Finder implements InstanceableFinderInterface
             ->build();
     }
 
+    public function instanceable(): Collection
+    {
+        return $this->namespaces()->reject(fn (SplFileInfo $file) => Reflector::file($file)->isAbstract());
+    }
+
     public function instances(): Collection
     {
         return $this->getResultsBuilder()
-            ->source($this->namespaces(...))
+            ->source($this->instanceable(...))
             ->fresh(function (Collection $namespaces) {
-                return $namespaces->reject(fn (string $namespace) => Reflector::create($namespace)->isAbstract())->mapIntoInstance($this->arguments);
+                return $namespaces->mapIntoInstance($this->arguments);
             })
             ->after(function (Collection $instances, bool $cached) {
                 return $this->withCallbacks($instances, self::CALLBACK_INSTANCE, $cached);

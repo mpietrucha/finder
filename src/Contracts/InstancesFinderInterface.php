@@ -5,7 +5,7 @@ namespace Mpietrucha\Finder\Contracts;
 use Closure;
 use Illuminate\Support\Collection;
 
-interface InstanceableFinderInterface
+interface InstancesFinderInterface
 {
     public function namespace(Closure $callback, bool $cached = false): self;
 
@@ -14,6 +14,8 @@ interface InstanceableFinderInterface
     public function arguments(array $arguments): self;
 
     public function namespaces(): Collection;
+
+    public function instanceable(): Collection;
 
     public function instances(): Collection;
 }
