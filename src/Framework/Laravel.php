@@ -10,7 +10,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Contracts\Console\Kernel;
 use Mpietrucha\Finder\ProgressiveFinder;
 
-class Laravel extends AbstractFramework
+class Laravel extends Framework
 {
     protected const SEARCH_FILE_NAME = 'artisan';
 
