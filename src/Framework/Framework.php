@@ -1,6 +1,6 @@
 <?php
 
-namespace Mpietrucha\Finder;
+namespace Mpietrucha\Finder\Framework;
 
 use Mpietrucha\Support\Concerns\HasFactory;
 use Mpietrucha\Finder\Contracts\FrameworkFinderInterface;

@@ -62,7 +62,7 @@ class InstancesFinder extends Finder implements InstanceableFinderInterface
         return $this->getResultsBuilder()
             ->source($this->namespaces(...))
             ->fresh(function (Collection $namespaces) {
-                return $namespaces->mapIntoInstance($this->arguments);
+                return $namespaces->reject(fn (string $namespace) => Reflector::create($namespace)->isAbstract())->mapIntoInstance($this->arguments);
             })
             ->after(function (Collection $instances, bool $cached) {
                 return $this->withCallbacks($instances, self::CALLBACK_INSTANCE, $cached);
