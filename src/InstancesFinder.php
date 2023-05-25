@@ -49,7 +49,7 @@ class InstancesFinder extends Finder implements InstancesFinderInterface
     {
         return $this->getResultsBuilder()
             ->fresh(function (Collection $namespaces) {
-                return $namespaces->map(fn (SplFileInfo $file) => Reflector::file($file)?->getName())->filter();
+                return $namespaces->map(fn (SplFileInfo $file) => NamespaceFinder::file($file)->first())->filter();
             })
             ->after(function (Collection $namespaces, bool $cached) {
                 return $this->withCallbacks($namespaces, self::CALLBACK_NAMESPACE, $cached);
