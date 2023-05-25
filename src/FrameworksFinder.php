@@ -16,8 +16,10 @@ class FrameworksFinder extends InstancesFinder
 
     protected const DIRECTORY = '/Framework';
 
-    public function __construct()
+    public function __construct(string|array $input = [])
     {
+        $this->in($input);
+
         parent::__construct(__DIR__.self::DIRECTORY);
     }
 
