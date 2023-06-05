@@ -2,17 +2,18 @@
 
 namespace Mpietrucha\Finder;
 
-use Illuminate\Support\Stringable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Stringable;
 use Illuminate\Support\LazyCollection;
+use Mpietrucha\Finder\Contracts\Progressive\FinderInterface;
 
-class ProgressiveFinder extends Finder
+class ProgressiveFinder extends Finder implements FinderInterface
 {
-    protected string $stop = DIRECTORY_SEPARATOR;
+    protected string $until = DIRECTORY_SEPARATOR;
 
-    public function stop(string $stop): self
+    public function until(string $until): self
     {
-        $this->stop = $stop;
+        $this->until = $until;
 
         return $this;
     }
@@ -24,14 +25,14 @@ class ProgressiveFinder extends Finder
 
     protected function nextTick(): LazyCollection
     {
-        return collect($this->input)->filter(fn (string $directory) => $directory !== $this->stop)
+        return $this->in->filter(fn (string $directory) => $directory !== $this->until)
             ->toStringable()
-            ->map(function (Stringable $path) {
-                return $path->toDirectoryCollection()->withoutLast()->toRootDirectory();
+            ->map(function (Stringable $directory) {
+                return $directory->toDirectoryCollection()->withoutLast()->toRootDirectory()->toString();
             })
             ->whenEmpty(fn () => LazyCollection::empty())
-            ->whenNotEmpty(function (Collection $input) {
-                return $this->forward('in', $input->toArray())->lazy();
+            ->whenNotEmpty(function (Collection $in) {
+                return $this->notPath($this->in->toArray())->in($in->toArray())->lazy();
             });
     }
 }

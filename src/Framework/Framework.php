@@ -2,15 +2,14 @@
 
 namespace Mpietrucha\Finder\Framework;
 
-use Mpietrucha\Support\Concerns\HasFactory;
-use Mpietrucha\Finder\Contracts\FrameworkFinderInterface;
+use Mpietrucha\Finder\Skeleton;
+use Mpietrucha\Finder\Contracts\Framework\FindableInterface;
 
-abstract class Framework implements FrameworkFinderInterface
+abstract class Framework extends Skeleton implements FindableInterface
 {
-    use HasFactory;
-
     public function __construct(protected string $path)
     {
+        parent::__construct();
     }
 
     public function path(): string

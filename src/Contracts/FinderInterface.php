@@ -2,13 +2,14 @@
 
 namespace Mpietrucha\Finder\Contracts;
 
-use SplFileInfo;
 use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 
-interface FinderInterface extends CacheableFinderInterface, FinderAwareInterface
+interface FinderInterface
 {
-    public function first(): null|string|SplFileInfo;
+    public function in(null|string|array $input): self;
+
+    public function first(): mixed;
 
     public function find(): Collection;
 

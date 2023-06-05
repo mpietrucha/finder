@@ -2,7 +2,6 @@
 
 namespace Mpietrucha\Finder\Framework;
 
-use Mpietrucha\Support\Macro;
 use Mpietrucha\Support\File;
 use Illuminate\Support\Collection;
 use Mpietrucha\Support\Bootstrapper;
@@ -18,10 +17,11 @@ class Laravel extends Framework
 
     protected const BOOTSTRAP_FILE = 'bootstrap/app.php';
 
-    public static function find(null|array|string $in): Collection
+    public static function get(null|array|string $in = null): Collection
     {
-        return ProgressiveFinder::create($in ?? self::DEFAULT_IN)
+        return ProgressiveFinder::create($in ?: self::DEFAULT_IN)
             ->files()
+            ->ignoreUnreadableDirs()
             ->name(self::SEARCH_FILE_NAME)
             ->find();
     }

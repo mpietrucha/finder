@@ -3,7 +3,6 @@
 namespace Mpietrucha\Finder\Executable;
 
 use Closure;
-use Mpietrucha\Finder\Contracts\ExecutableFinderInterface;
 
 class ClosureHandler extends Handler
 {

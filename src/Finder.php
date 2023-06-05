@@ -4,66 +4,86 @@ namespace Mpietrucha\Finder;
 
 use Closure;
 use SplFileInfo;
-use Mpietrucha\Support\Macro;
+use Mpietrucha\Support\Key;
+use Mpietrucha\Support\File;
 use Mpietrucha\Support\Rescue;
-use Mpietrucha\Support\Argument;
 use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
-use Mpietrucha\Support\Concerns\HasFactory;
-use Mpietrucha\Support\RestorableHigherProxy;
+use Mpietrucha\Finder\Cache\NullAdapter;
+use Mpietrucha\Finder\Cache\StorageAdapter;
 use Mpietrucha\Support\Concerns\ForwardsCalls;
-use Symfony\Component\Finder\Finder as SymfonyFinder;
 use Mpietrucha\Finder\Contracts\FinderInterface;
-use Mpietrucha\Finder\Concerns\WithCache;
+use Mpietrucha\Finder\Contracts\CacheableInterface;
+use Mpietrucha\Finder\Contracts\Cache\AdapterInterface;
+use Symfony\Component\Finder\Finder as SymfonyFinder;
 
-class Finder implements FinderInterface
+class Finder extends Skeleton implements FinderInterface, CacheableInterface
 {
-    use HasFactory;
-
     use ForwardsCalls;
 
-    use WithCache;
+    protected bool $bootstrapped = false;
 
-    public function __construct(protected string|array $input = [])
+    protected ?Closure $directory = null;
+
+    protected ?AdapterInterface $cache = null;
+
+    public function __construct(null|string|array $default = null, protected Collection $in = new Collection)
     {
-        Macro::bootstrap();
+        $this->forwardTo(SymfonyFinder::create())->forwardThenReturnThis()->configure();
 
-        $this->setInput($input);
+        $this->in($default)->usingCacheAdapter(new NullAdapter);
 
-        $this->setFinder(Rescue::create(fn () => SymfonyFinder::create()->ignoreUnreadableDirs()->in($this->input))->call(...))
-            ->forwardFallback()
-            ->forwardThenReturnThis()
-            ->forwardResolveClosure()
-            ->forwardImmediatelyTapClosure()
-            ->forwardFallbackRestore(
-                fn (RestorableHigherProxy $proxy) => $proxy->__latest()->__hits()->except('in'),
-                fn (?SymfonyFinder $finder) => $this->setFinder($finder)
-            )
-            ->forwardMethodTap('in', function (string|array $input) {
-                $this->notPath($this->input)->setInput($input);
-            })
-            ->configure();
+        parent::__construct();
     }
 
     public function configure(): void
     {
     }
 
-    public function setFinder(null|Closure|SymfonyFinder $finder): self
+    public function directory(Closure $directory): self
     {
-        return $this->forwardTo($finder);
+        $this->directory = $directory;
+
+        return $this;
     }
 
-    public function setInput(string|array $input): array
+    public function in(null|string|array $in): self
     {
-        return $this->input = Argument::arguments($input)->filter->value()->always(function ($argument) {
-            return $argument->string();
-        })->call();
+        collect($in)->filter()
+            ->tap(function (Collection $in) {
+                $this->in->push(...$in);
+            })
+            ->unless(! $this->directory, function (Collection $in) {
+                return $in->map($this->directory);
+            })
+            ->filter()
+            ->map(function (string $directory) {
+                return Rescue::create(fn () => $this->getForward()->in($directory))->call();
+            })
+            ->filter()
+            ->whenNotEmpty(function () {
+                $this->bootstrapped = true;
+            });
+
+        return $this;
     }
 
     public function flatten(): self
     {
         return $this->depth('== 0');
+    }
+
+    public function hasDeepInput(): self
+    {
+        return $this->directory(function (string $directory) {
+            if ($this->bootstrapped) {
+                return null;
+            }
+
+            $this->in->shift();
+
+            return $directory;
+        });
     }
 
     public function first(): ?SplFileInfo
@@ -78,25 +98,39 @@ class Finder implements FinderInterface
 
     public function lazy(): LazyCollection
     {
-        if ($results = $this->getCacheProvider()?->get()) {
-            return $results;
-        }
-
-        $iterator = Rescue::create(fn () => $this->getForward()?->getIterator())->call();
-
-        if (! $iterator) {
+        if (! $this->bootstrapped) {
             return LazyCollection::empty();
         }
 
-        $results = LazyCollection::make($iterator);
-
-        $this->getCacheProvider()?->put($results);
-
-        return $results;
+        return $this->getCacheAdapter()->put(function () {
+             return LazyCollection::make(fn () => yield from $this->getForward()->getIterator());
+        })->before(fn (LazyCollection $results) => $results->map(fn (SplFileInfo $file) => [
+            $file->getRealPath(),
+            $file->getRelativePath(),
+            $file->getRelativePathname()
+        ]))->get(fn (LazyCollection $results) => $results->map(fn (array $file) => File::toSplFileInfo(...$file)));
     }
 
-    public function getResultsBuilder(): ResultBuilder
+    public function cache(null|array|string $keys = null, mixed $expires = null): self
     {
-        return ResultBuilder::create($this->getCacheProvider())->source($this->find(...));
+        if (! $this->getCacheAdapter()->readable()) {
+            $this->usingCacheAdapter(new StorageAdapter);
+        }
+
+        $this->getCacheAdapter()->key(Key::create($keys ?? $this)->hash())->expires($expires);
+
+        return $this;
+    }
+
+    public function getCacheAdapter(): ?AdapterInterface
+    {
+        return $this->cache;
+    }
+
+    public function usingCacheAdapter(AdapterInterface $cache): self
+    {
+        $this->cache = $cache;
+
+        return $this;
     }
 }

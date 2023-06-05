@@ -2,32 +2,20 @@
 
 namespace Mpietrucha\Finder\Executable;
 
-use SplFileInfo;
-use Mpietrucha\Support\Types;
 use Mpietrucha\Support\File;
 use Illuminate\Support\Stringable;
-use Mpietrucha\Finder\Concerns\WithStaticInput;
-use Mpietrucha\Finder\Contracts\ExecutableFinderInterface;
-use Mpietrucha\Finder\Concerns\ResolveWith;
+use Mpietrucha\Finder\Contracts\Executable\Inputable;
+use Mpietrucha\Finder\Contracts\Executable\Registerable;
 
-class ContentsHandler extends Executable implements ExecutableFinderInterface
+class ContentsHandler extends Handler implements Registerable, Inputable
 {
-    use ResolveWith;
-
-    use WithStaticInput;
-
-    public function __construct(protected ?string $contains = null, protected ?ClosureHandler $handler = null)
+    public function __construct(protected string $contains, protected ClosureHandler $handler)
     {
     }
 
-    public function shouldRegister(): bool
+    public static function register(): void
     {
-        return ! $this->contains || ! $this->handler;
-    }
-
-    public function register(): void
-    {
-        self::createAsHandler('<?php', fn () => 'php')->resolveWithSymfonyPhpExecutableFinder();
+        self::createAsHandler('<?php', fn () => 'php');
 
         self::createAsHandler('@echo off', fn () => '');
 
@@ -36,30 +24,16 @@ class ContentsHandler extends Executable implements ExecutableFinderInterface
         });
     }
 
-    public function handling(mixed $input): void
+    public function handling(string $input): void
     {
-        if (! $input instanceof SplFileInfo) {
-            self::withStaticInput(Types::string($input) ? $input : null);
-
-            return;
-        }
-
-        if (! $input->isReadable()) {
-            self::withStaticInput(null);
-
-            return;
-        }
-
-        self::withStaticInput(File::toStringable($input));
+        self::withStaticInput(
+            File::exists($input) ? File::toStringable($input) : str($input)
+        );
     }
 
     public function result(): ?string
     {
-        if (! self::input()) {
-            return null;
-        }
-
-        if (! self::input()->contains($this->contains)) {
+        if (! self::input()?->contains($this->contains)) {
             return null;
         }
 

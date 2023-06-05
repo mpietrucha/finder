@@ -1,13 +1,13 @@
 <?php
 
-namespace Mpietrucha\Finder\Contracts;
+namespace Mpietrucha\Finder\Contracts\Framework;
 
 use Illuminate\Support\Collection;
 use Mpietrucha\Support\Bootstrapper;
 
-interface FrameworkFinderInterface
+interface FindableInterface
 {
-    public static function find(null|array|string $in): Collection;
+    public static function get(null|array|string $in = null): Collection;
 
     public function name(): string;
 

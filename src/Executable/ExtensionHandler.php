@@ -2,20 +2,15 @@
 
 namespace Mpietrucha\Finder\Executable;
 
-use SplFileInfo;
-use Mpietrucha\Finder\Concerns\WithStaticInput;
 use Mpietrucha\Support\File;
 use Illuminate\Support\Collection;
-use Mpietrucha\Finder\Contracts\ExecutableFinderInterface;
-use Mpietrucha\Finder\Concerns\ResolveWith;
+use Mpietrucha\Finder\Contracts\Executable\Inputable;
+use Mpietrucha\Finder\Contracts\Executable\Registerable;
 
-class ExtensionHandler extends Executable implements ExecutableFinderInterface
+class ExtensionHandler extends Handler implements Registerable, Inputable
 {
-    use ResolveWith;
-
-    use WithStaticInput;
-
     protected const EXTENSIONS = [
+        'php' => 'php',
         'js' => 'node',
         'jsx' => 'node',
         'ts' => 'node',
@@ -23,45 +18,28 @@ class ExtensionHandler extends Executable implements ExecutableFinderInterface
         'py' => 'python'
     ];
 
-    public function __construct(protected ?string $extension = null, protected ?string $executable = null)
+    public function __construct(protected string $extension, protected string $executable)
     {
     }
 
-    public function shouldRegister(): bool
+    public static function register(): void
     {
-        return ! $this->extension || ! $this->executable;
+        collect(self::EXTENSIONS)->each(fn (string $executable, string $extension) => self::createAsHandler($extension, $executable));
     }
 
-    public function register(): void
+    public function handling(string $input): void
     {
-        self::createAsHandler('php', 'php')->resolveWithSymfonyPhpExecutableFinder();
-
-        collect(self::EXTENSIONS)->map(fn (string $executable, string $extension) => self::createAsHandler($extension, $executable));
-    }
-
-    public function handling(mixed $input): void
-    {
-        if (! $input instanceof SplFileInfo) {
-            self::withStaticInput(null);
-
-            return;
-        }
-
-        $extensions = collect([
+        $extension = collect([
             File::extension($input)
-        ])->when(File::exists($input), function (Collection $extensions) use ($input) {
-            $extensions->push(File::guessExtension($input));
-        });
+        ])->when(File::exists($input), fn (Collection $extensions) => $extensions->push(
+            File::guessExtension($input)
+        ))->filter()->first();
 
-        self::withStaticInput($extensions->filter()->first());
+        self::withStaticInput($extension);
     }
 
     public function result(): ?string
     {
-        if (! self::input()) {
-            return null;
-        }
-
         if ($this->extension !== self::input()) {
             return null;
         }

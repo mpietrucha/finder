@@ -2,19 +2,18 @@
 
 namespace Mpietrucha\Finder;
 
-use Mpietrucha\Support\Macro;
+use ReflectionException;
+use Mpietrucha\Support\Types;
 use Mpietrucha\Error\Reporting;
 use Mpietrucha\Support\Package;
 use Illuminate\Support\Stringable;
 use Illuminate\Support\Collection;
-use Mpietrucha\Support\Concerns\HasFactory;
 use Mpietrucha\Support\Concerns\HasInputFile;
-use Mpietrucha\Finder\Contracts\FinderAwareInterface;
+use Mpietrucha\Finder\Contracts\FinderInterface;
+use Mpietrucha\Exception\InvalidArgumentException;
 
-class NamespaceFinder implements FinderAwareInterface
+class NamespaceFinder extends Skeleton implements FinderInterface
 {
-    use HasFactory;
-
     use HasInputFile;
 
     protected Stringable $contents;
@@ -27,9 +26,20 @@ class NamespaceFinder implements FinderAwareInterface
 
     public function __construct(string $contents)
     {
-        Macro::bootstrap();
+        $this->in($contents);
+
+        parent::__construct();
+    }
+
+    public function in(null|string|array $contents): self
+    {
+        throw_unless(Types::string($contents), new InvalidArgumentException(
+            'Argument', ['in'], 'must be string'
+        ));
 
         $this->contents = str($contents);
+
+        return $this;
     }
 
     public function first(): ?Stringable
@@ -70,9 +80,9 @@ class NamespaceFinder implements FinderAwareInterface
 
     protected function exists(string $namespace): bool
     {
-        return Reporting::create()->disable()->while(function () use ($namespace) {
-            return collect(['exists', 'trait', 'interface'])->filter(fn (string $method) => Package::$method($namespace));
-        })?->count() === 1;
+        return Reporting::create()->withoutDeprecated()->withoutRecoverable()->while(fn () => Package::any($namespace), [
+            ReflectionException::class
+        ]) === true;
     }
 
     protected function items(Collection $items): Collection

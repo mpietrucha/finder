@@ -2,67 +2,100 @@
 
 namespace Mpietrucha\Finder;
 
-use SplFileInfo;
 use Closure;
-use Mpietrucha\Finder\Concerns\WithStaticInput;
-use Mpietrucha\Finder\Concerns\WithCache;
+use SplFileInfo;
+use Mpietrucha\Support\Caller;
+use Mpietrucha\Finder\Executable;
 use Illuminate\Support\Collection;
-use Mpietrucha\Support\Macro;
-use Mpietrucha\Support\File;
 use Illuminate\Support\LazyCollection;
-use Mpietrucha\Support\Concerns\HasFactory;
-use Mpietrucha\Support\Concerns\HasInputFile;
 use Mpietrucha\Finder\Contracts\FinderInterface;
-use Mpietrucha\Finder\Executable\Executable;
-use Mpietrucha\Finder\Contracts\ExecutableFinderInterface;
+use Mpietrucha\Finder\Contracts\Executable\Inputable;
+use Mpietrucha\Finder\Contracts\Executable\Registerable;
+use Mpietrucha\Finder\Contracts\Executable\FindableInterface;
+use Symfony\Component\Process\ExecutableFinder as SymfonyExecutableFinder;
+use Symfony\Component\Process\PhpExecutableFinder as SymfonyPhpExecutableFinder;
 
-class ExecutableFinder extends Executable implements FinderInterface
+class ExecutableFinder extends Skeleton implements FinderInterface
 {
-    use HasFactory;
+    protected static ?Collection $handlers = null;
 
-    use HasInputFile;
+    protected static ?Collection $resolvers = null;
 
-    use WithCache;
+    protected static bool $hasDefaultHandlers = false;
 
-    protected const HANDLERS = [
-        Executable\ExtensionHandler::class,
-        Executable\ContentsHandler::class
-    ];
-
-    public function __construct(mixed $default, protected Collection $input = new Collection)
+    public function __construct(mixed $default = null, protected Collection $in = new Collection)
     {
-        $handlers = collect(self::HANDLERS)->mapIntoInstance();
+        parent::__construct();
 
-        self::defaultHandlers($handlers);
+        $this->buildDefaultHandlers();
 
-        $this->add($default);
+        $this->buildDefaultResolvers();
+
+        $this->in($default);
     }
 
-    public static function extension(string $extension, string $executable): ExtensionHandler
+    public static function extension(string $extension, string $executable): Executable\ExtensionHandler
     {
         return Executable\ExtensionHandler::createAsHandler($extension, $executable);
     }
 
-    public static function contents(string $contains, Closure $handler): ContentsHandler
+    public static function contents(string $contents, Closure $handler): Executable\ContentsHandler
     {
         return Executable\ContentsHandler::createAsHandler($contains, $handler);
     }
 
-    protected static function configure(SplFileInfo $file): ?self
+    public static function handler(Closure|FindableInterface $handler): FindableInterface
     {
-        return self::create($file);
+        if (! $handler instanceof FindableInterface) {
+            $handler = new Executable\ClosureHandler($handler);
+        }
+
+        self::handlers()->push($handler);
+
+        return $handler;
     }
 
-    public function add(mixed $input): self
+    public static function executable(string $executable): ?string
     {
-        $this->input->push($input);
+        $executable = str($executable);
+
+        return Caller::create(
+            self::resolvers()
+                ->filter(fn (Closure $handler, string $resolver) => $executable->is($resolver))
+                ->sortKeysDesc()
+                ->first()
+        )->add(fn (string $executable) => with(new SymfonyExecutableFinder)->find($executable))->call($executable);
+    }
+
+    public static function resolver(string $executable, Closure $resolver): void
+    {
+        if (self::resolvers()->has($executable)) {
+            return;
+        }
+
+        self::resolvers()->put($executable, $resolver);
+    }
+
+    public static function resolvers(): Collection
+    {
+        return self::$resolvers ??= collect();
+    }
+
+    public static function handlers(): Collection
+    {
+        return self::$handlers ??= collect();
+    }
+
+    public function in(null|string|array $in): self
+    {
+        $this->in->push($in);
 
         return $this;
     }
 
     public function first(): ?string
     {
-        return $this->find()->first()?->getPathname();
+        return $this->find()->first();
     }
 
     public function find(): Collection
@@ -72,47 +105,59 @@ class ExecutableFinder extends Executable implements FinderInterface
 
     public function lazy(): LazyCollection
     {
-        if ($results = $this->getCacheProvider()?->get()) {
-            return $results;
-        }
-
-        $handlers = self::handlers()->reject->shouldRegister();
-
-        $results = LazyCollection::make($this->input)
+        return LazyCollection::make($this->in)
+            ->flatten()
             ->filter()
-            ->map(fn (mixed $input) => $this->touch($handlers, $input)->map(fn (ExecutableFinderInterface $handler) => [
-                $handler->result(), $handler->resolveWith()
-            ]))
+            ->map($this->touch(...))
             ->collapse()
-            ->mapSpread($this->toResolvedResult(...))
+            ->filter()
+            ->whenEmpty(fn (LazyCollection $results) => $results->merge($this->in->filter()))
+            ->map(self::executable(...))
             ->filter();
-
-        $this->getCacheProvider()?->put($results);
-
-        return $results;
     }
 
-    protected function touch(Collection $handlers, mixed $input): Collection
+    protected function touch(string $input): Collection
     {
-        $instances = $handlers->unique(function (ExecutableFinderInterface $handler) {
-            if (class_uses_trait($handler, WithStaticInput::class)) {
-                return [WithStaticInput::class, $handler::class];
+        $handlers = self::handlers();
+
+        $instances = $handlers->unique(function (FindableInterface $handler) {
+            if ($handler instanceof Inputable) {
+                return $handler::class;
             }
 
             return $handler;
         });
 
-        $instances->each(fn (ExecutableFinderInterface $handler) => $handler->handling($input));
+        return $handlers->map(function (FindableInterface $handler) use ($instances, $input) {
+            if ($handler === $instances->first()) {
+                $instances->shift()->handling($input);
+            }
 
-        return $handlers;
+            return $handler->result();
+        });
     }
 
-    protected function toResolvedResult(?string $result, Closure $handler): ?SplFileInfo
+    protected function buildDefaultHandlers(): void
     {
-        if (! $result) {
-            return null;
+        if (self::$hasDefaultHandlers) {
+            return;
         }
 
-        return File::toSplFileInfo($handler($result));
+        InstanceFinder::create(__DIR__.'/Executable')->namespace(function (string $namespace) {
+            return class_implements_interface($namespace, Registerable::class);
+        })->instanceable()->each(fn (string $handler) => $handler::register());
+
+        self::$hasDefaultHandlers = true;
+    }
+
+    protected function buildDefaultResolvers(): void
+    {
+        self::resolver('php', function (string $executable) {
+            if (! $executable = with(new SymfonyPhpExecutableFinder)->find()) {
+                return null;
+            }
+
+            return $executable;
+        });
     }
 }
