@@ -4,7 +4,7 @@ namespace Mpietrucha\Finder;
 
 use Closure;
 use SplFileInfo;
-use Mpietrucha\Support\Key;
+use Mpietrucha\Support\Hash;
 use Mpietrucha\Support\File;
 use Mpietrucha\Support\Rescue;
 use Illuminate\Support\Collection;
@@ -117,7 +117,9 @@ class Finder extends Skeleton implements FinderInterface, CacheableInterface
             $this->usingCacheAdapter(new StorageAdapter);
         }
 
-        $this->getCacheAdapter()->key(Key::create($keys ?? $this)->hash())->expires($expires);
+        $this->getCacheAdapter()->key(
+            Hash::md5($keys ?? $this)
+        )->expires($expires);
 
         return $this;
     }
