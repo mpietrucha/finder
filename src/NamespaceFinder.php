@@ -80,9 +80,7 @@ class NamespaceFinder extends Skeleton implements FinderInterface
 
     protected function exists(string $namespace): bool
     {
-        return Reporting::create()->withoutDeprecated()->withoutRecoverable()->while(fn () => Package::any($namespace), [
-            ReflectionException::class
-        ]) === true;
+        return Reporting::create()->withoutDeprecated()->withoutRecoverable()->catch()->while(fn () => Package::any($namespace)) === true;
     }
 
     protected function items(Collection $items): Collection
