@@ -22,4 +22,6 @@ interface AdapterInterface
     public function override(bool $mode = true): self;
 
     public function get(?Closure $after = null): Enumerable;
+
+    public function resultsAreCached(): bool;
 }

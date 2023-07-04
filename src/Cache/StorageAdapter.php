@@ -28,7 +28,7 @@ class StorageAdapter extends Adapter
         });
 
         if ($results = $adapter->get($key = $this->getKey())) {
-            return $this->with($after, $results);
+            return $this->with($after, $results, true);
         }
 
         $results = $this->with($this->before, parent::get());

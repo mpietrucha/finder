@@ -21,6 +21,8 @@ abstract class Adapter extends Skeleton implements AdapterInterface
 
     protected ?Closure $before = null;
 
+    protected bool $resultsAreCached = false;
+
     public function readable(): bool
     {
         return true;
@@ -80,8 +82,15 @@ abstract class Adapter extends Skeleton implements AdapterInterface
         return collect([$this->key, $this->as])->toDotWord();
     }
 
-    protected function with(?Closure $callback, Enumerable $results): Enumerable
+    public function resultsAreCached(): bool
     {
+        return $this->resultsAreCached;
+    }
+
+    protected function with(?Closure $callback, Enumerable $results, bool $resultsAreCached = false): Enumerable
+    {
+        $this->resultsAreCached = $resultsAreCached;
+
         return value($callback, $results) ?? $results;
     }
 }
